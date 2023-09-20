@@ -3,7 +3,7 @@
 :root {
   --color-primary: #007bff;
   --color-secondary: #ccc;
-  --color-background: #222;
+  --color-background: #202124;
   --color-text: #fff;
 }
 
@@ -82,7 +82,7 @@ footer {
 }
 
 .box {
-  background-color: #333;
+  background-color: #35373a;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
@@ -128,7 +128,7 @@ footer {
   margin: 0 auto;
   display: block;
   color: var(--color-text);
-  background-color: #333;
+  background-color: #35373a;
   width: 290px;
 }
 
@@ -183,12 +183,13 @@ h5 {
 
 input[type="file"]::-webkit-file-upload-button {
   padding: 5px 10px;
-  background-color: #505051;
+  background-color: #35373a;
   color: #e3e2e2;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  margin: 3px;
+  margin: 4px;
+  font-weight: 600;
 }
 
 input[type="file"]::-webkit-file-upload-button:hover {
