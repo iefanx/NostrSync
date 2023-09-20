@@ -1,6 +1,6 @@
 {
-  "name": "Nostryfied",
-  "short_name": "Nostryfied",
+  "name": "NostrSync",
+  "short_name": "NostrSync",
   "description": "Fetch, backup and broadcast your Nostr events",
   "start_url": "/",
   "display": "standalone",
