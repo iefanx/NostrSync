@@ -1,0 +1,211 @@
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&display=swap');
+
+:root {
+  --color-primary: #007bff;
+  --color-secondary: #ccc;
+  --color-background: #222;
+  --color-text: #fff;
+}
+
+body {
+  font-family: 'Red Hat Text', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+h2 {
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 5px;
+  max-width: 52ch;
+  padding: .3em;
+}
+
+p {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  font-weight: 400;
+}
+a {
+  display: inline-block;
+  padding: .5em 1.5em;
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  text-decoration: none;
+  text-transform: uppercase;
+  border-radius: 0.3em;
+  font-weight: 700;
+  letter-spacing: .5px;
+  font-size: .875rem;
+  text-align: center;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #1b4af4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 5px;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.box {
+  background-color: #333;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+  height: 10px;
+  background-color: #555;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-bar::-webkit-progress-bar {
+  background-color: #555;
+  border-radius: 10px;
+}
+
+.progress-bar::-webkit-progress-value {
+  background-color: var(--color-primary);
+  border-radius: 10px;
+  animation: loading 2s ease-out infinite;
+}
+
+.space-between {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.space-between-small {
+  display: flex;
+  justify-content: center;
+}
+
+#pubkey {
+  display: flex;
+  font-size: 16px;
+  padding: 5px;
+  border: none;
+  border-radius: 4px;
+  box-sizing: border-box;
+  min-width: 100%;
+  margin: 0 auto;
+  display: block;
+  color: var(--color-text);
+  background-color: #333;
+  width: 290px;
+}
+
+
+
+@media (min-width: 668px) {
+  /* Medium devices (e.g., tablets) */
+  #pubkey {
+    width: 500px;
+  }
+}
+
+
+#pubkey::placeholder {
+  color: #999;
+}
+
+.wrapper {
+  padding-bottom: 20px;
+}
+
+.divider {
+  position: relative;
+  margin-top: 5px;
+  height: 5px;
+  margin-bottom: 5px;
+}
+
+.div-transparent:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 5%;
+  right: 5%;
+  width: 90%;
+  height: 1px;
+  background-image: linear-gradient(to right, transparent, rgb(48,49,51), transparent);
+}
+
+h4 {
+  font-size: 1.4rem;
+  font-weight: 450;
+}
+
+h5 {
+  margin: 0;
+  padding: 10px;
+  text-align: center;
+  display: inline-block;
+  font-weight: 600;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+  padding: 5px 10px;
+  background-color: #505051;
+  color: #e3e2e2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 3px;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover {
+  background-color: #b0b0b3;
+}
+
+
+
+footer p {
+  margin: 0;
+  padding: 10px;
+  text-align: center;
+  display: inline-block;
+}
+
+#file-selector{
+  font-size: small;
+  font-weight: 600;
+}
+

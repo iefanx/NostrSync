@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html data-theme="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Primary Meta Tags -->
+    <title>Nostryfied</title>
+    <meta name="title" content="Nostr Backup Service by Nostryfied" />
+    <meta
+      name="description"
+      content="Fetch, backup and broadcast your Nostr events" />
+
+    <!-- Favicon -->
+    <link
+      rel="shortcut icon"
+      https://res.cloudinary.com/dfquzutga/image/upload/v1677188210/Screenshot_20230224_030530_Canva_2_cwvo5m.jpg
+      
+      type="image/x-icon" />
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css" />
+    <!-- Lightning -->
+    <meta name="lightning" content="realiefan@ln.tips" />
+    <!-- PWA -->
+    <meta name="theme-color" content="#ffffff" />
+    <link
+      rel="apple-touch-icon"
+      href="https://nostr-utils.pages.dev/img/broadcast.png" />
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nostryfied</title>
+    
+  </head>
+
+  <body>
+    
+    <main class="container">
+      <div class="header-space">
+        <h1>Nostryfied</h1>
+      </div>
+      <h2><b>Nostryfied</b> offers an <b>Broadcast & Export Service</b> that allows you to <b>Download a 
+        Copy of your Data</b> & when you use this service, all of your data will also be <b>Broadcasted to Major Relays</b> 
+         on the network. <br><br>This design ensures that the data is <b> Widely Distributed</b> 
+         and makes it more <b>Resistant to Censorship.</b>
+      </h2>
+      <div>
+        <form>
+          <div>
+            <form>
+              <div class="space-between-small">
+                <p>
+                  <input
+                    type="text"
+                    id="pubkey"
+                    name="pubkey"
+                    onchange="pubkeyOnChange()"
+                    placeholder="Public key (npub or hex)"
+                    
+                    required />
+                </p>
+              </div>
+              <div class="space-between-small">
+                <div class="space-between">
+                  <b>OR</b>
+                </div>
+              </div>
+              <div class="space-between">
+                <div class="space-between">
+                  <p>
+                    <input type="file" class="file-selector" id="file-selector">
+                  </p>
+                  <script>
+                    var fileName = ""
+      
+                    const fileSelector = document.getElementById('file-selector');
+                    fileSelector.addEventListener('change', (event) => {
+                      fileName = event.target.files[0];
+                      $('#fetch-and-broadcast').css('display', 'none')
+                      $('#just-broadcast').css('display', 'inline-block')
+                    });
+                  </script>
+                </div>
+              </div>
+            </form>
+          </div>
+          
+          <style>
+            
+            </style>
+        
+            <p>
+              <button
+                id="fetch-and-broadcast"
+                onclick="fetchAndBroadcast(); return false;">
+                Backup & Broadcast
+              </button>
+              <button
+                id="just-broadcast"
+                onclick="justBroadcast(fileName); return false;" 
+                style="display: none">
+                Broadcast from File
+              </button>
+              <button
+                id="get-from-extension"
+                onclick="getFromExtension(); return false;"
+                style="display: none">
+                Get from extension
+              </button>
+            </p>
+          </div>
+        </form>
+      </div>
+      <div class="box">
+        <div class="box-content">
+          <p id="fetching-status"></p>
+          <p style="padding-top: 2px">
+            <progress
+              type="range"
+              id="fetching-progress"
+              name="fetching-progress"
+              min="0"
+              max="180"
+              value="0"
+              style="visibility: hidden" />
+          </p>
+        </div>
+        <div class="box-content" id="checking-relays-header-box">
+          <p id="checking-relays-header"></p>
+        </div>
+        <div class="box-content" id="checking-relays-box">
+          <p id="checking-relays"></p>
+        </div>
+        <div class="box-content">
+          <p id="file-download"></p>
+          <p id="events-found"></p>
+        </div>
+        <div class="box-content">
+          <p id="broadcasting-status"></p>
+          <p style="padding-top: 2px">
+            <progress
+              type="range"
+              id="broadcasting-progress"
+              name="broadcasting-progress"
+              min="0"
+              max="180"
+              value="0"
+              style="visibility: hidden" />
+          </p>
+        </div>
+      </div>
+      
+      
+
+      <footer>
+      <h5>
+
+        <p>Please note that our data export service is a best-effort service and not 
+          a complete backup. While we do our best to ensure that all data is included
+           in the export, we cannot guarantee that all data will be exported."</p>
+        </h4>
+        
+      </footer>
+    </main>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then((registration) => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('Service Worker registration failed:', error);
+          });
+      }
+    </script>
+
+
+    <script src="https://bundle.run/buffer@6.0.3"></script>
+    <script src="https://bundle.run/bech32@2.0.0"></script>
+    <script src="https://nostr-utils.pages.dev/js/jquery-3.6.2.min.js"></script>
+    <script src="js/nostr-utils.js"></script>
+    <script src="js/relays.js"></script>
+    <script src="js/nostr-broadcast.js"></script>
+  </body>
+</html>

@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Success Confirmation</title>
+    <style>
+      /* Add your custom styles here */
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: #f7f7f7;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 50px;
+        background-color: #fff;
+        text-align: center;
+        border-radius: 10px;
+        box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #4056c7;;
+      }
+      p {
+        font-size: 18px;
+        line-height: 1.6;
+        margin: 20px 0;
+      }
+      button {
+        background-color: #4056c7;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+      }
+      button:hover {
+        background-color: #4056c7;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Success!</h1>
+      <p>Thank you for submitting your request. it may take up to one day to complete. Once finished,
+        we will notify you through our Nostryied nostr account and provide a link to your backup files folder. 
+        Thank you.</p>
+      <button onclick="redirectToHome()">Return to Home</button>
+    </div>
+
+    <script>
+      function redirectToHome() {
+        window.location.href = "http://nostryfied.online"; // Replace with your home page URL
+      }
+    </script>
+    </div>
+  </body>
+</html>
