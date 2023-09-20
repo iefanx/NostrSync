@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Primary Meta Tags -->
     <title>NostrSync</title>
-    <meta name="title" content="Nostr Backup Service by Nostryfied" />
+    <meta name="title" content="Nostr Backup Service by NostrSync" />
     <meta
       name="description"
       content="Fetch, backup and broadcast your Nostr events" />
@@ -32,13 +32,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NostrSync</title>
     
+    
   </head>
 
   <body>
     
     <main class="container">
       <div class="header-space">
-        <h1>NostrSync</h1>
+        <div class="header">
+          <div class="logo-container">
+            <img src="icon.png" alt="" class="logo">
+          </div>
+          <h1>NostrSync</h1>
+        </div>
+
       </div>
       <h2><b>NostrSync</b> offers an <b>Broadcast & Export Service</b> that allows you to <b>Download a 
         Copy of your Data</b> & when you use this service, all of your data will also be <b>Broadcasted to Major Relays</b> 
@@ -49,7 +56,7 @@
         <form>
           <div>
             <form>
-              <div class="space-between-small">
+              <div class="space-between">
                 <p>
                   <input
                     type="text"
@@ -66,7 +73,7 @@
                   <b>OR</b>
                 </div>
               </div>
-              <div class="space-between">
+              <div class="space-between-small">
                 <div class="space-between">
                   <p>
                     <input type="file" class="file-selector" id="file-selector">
@@ -165,7 +172,7 @@
     </main>
    <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/js/sw.js')
+      navigator.serviceWorker.register('/sw.js')
         .then(function (registration) {
           console.log('Service Worker registered with scope:', registration.scope);
         })
@@ -174,6 +181,7 @@
         });
     }
   </script>
+
 
 
     <script src="https://bundle.run/buffer@6.0.3"></script>
