@@ -4,8 +4,8 @@
   "description": "Fetch, backup and broadcast your Nostr events",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#202124",
+  "theme_color": "#202124",
   "icons": [
     {
       "src": "icon.png", 
