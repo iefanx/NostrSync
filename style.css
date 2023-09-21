@@ -77,11 +77,11 @@ a {
 }
 
 button {
-  padding: 10px 10px;
-  background-color: #6790e2;
-  color: #292734;
+  padding: 8px 8px;
+  background-color: #0c53e2;
+  color: #f0ecec;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   margin-bottom: 5px;
   font-weight: bold;
@@ -90,6 +90,28 @@ button {
 
 button:hover {
   background-color: #0c53e2;
+}
+
+
+
+.dataBase a {
+  display: inline-block;
+  padding: 5px 5px;
+  background-color: #0c53e2;
+  /* Button background color */
+  color: #f0ecec;
+  text-decoration: none;
+  border: none;
+  font-size: x-small;
+  font-weight: 600;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.dataBase a:hover {
+  background-color: #0056b3;
+  /* Button background color on hover */
 }
 
 footer {
