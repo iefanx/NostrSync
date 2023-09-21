@@ -1,5 +1,3 @@
-// This is the "Offline copy of pages" service worker
-
 const CACHE = "NostrSync-cache";
 
 importScripts(
@@ -14,7 +12,7 @@ self.addEventListener("message", (event) => {
 
 workbox.routing.registerRoute(
   new RegExp("/*"),
-  new workbox.strategies.StaleWhileRevalidate({
+  new workbox.strategies.CacheFirst({
     cacheName: CACHE,
   })
 );
