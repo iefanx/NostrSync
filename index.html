@@ -50,8 +50,9 @@
       <h2><b>NostrSync</b> offers an <b>Broadcast & Export Service</b> that allows you to <b>Download a 
         Copy of your Data</b> & when you use this service, all of your data will also be <b>Broadcasted to Major Relays</b> 
          on the network. <br><br>This design ensures that the data is <b> Widely Distributed</b> 
-         and makes it more <b>Resistant to Censorship.</b>
-      </h2>
+         and makes it more <b>Resistant to Censorship.</b> 
+      </h2><a href="file:///Users/iefan/Desktop/Nostryfied-main%202/nostrdb/index.html">Database</a>
+
       <div>
         <form>
           <div>
@@ -172,7 +173,7 @@
     </main>
    <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/js/sw.js')
+      navigator.serviceWorker.register('/sw.js')
         .then(function (registration) {
           console.log('Service Worker registered with scope:', registration.scope);
         })

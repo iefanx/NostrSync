@@ -37,15 +37,72 @@ function hexToBytes(hex) {
   const parsePubkey = (pubkey) =>
     pubkey.match('npub1') ? npub2hexa(pubkey) : pubkey
   
-  // download js file
-  const downloadFile = (data, fileName) => {
-    const prettyJs = 'const data = ' + JSON.stringify(data, null, 2)
-    const tempLink = document.createElement('a')
-    const taBlob = new Blob([prettyJs], { type: 'text/javascript' })
-    tempLink.setAttribute('href', URL.createObjectURL(taBlob))
-    tempLink.setAttribute('download', fileName)
-    tempLink.click()
+
+
+ // Open or create a new IndexedDB database
+const dbName = 'NostrDB';
+const dbVersion = 1;
+const objectStoreName = 'Backups';
+
+const openDatabase = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName, dbVersion);
+
+    request.onerror = (event) => {
+      reject(event.target.error);
+    };
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+
+      // Create an object store to store your "Data" files
+      if (!db.objectStoreNames.contains(objectStoreName)) {
+        db.createObjectStore(objectStoreName, { autoIncrement: true });
+      }
+    };
+
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      resolve(db);
+    };
+  });
+};
+
+const generateUniqueFileName = (fileName) => {
+  const timestamp = Date.now(); // Use a timestamp as part of the unique key
+  return `${timestamp}_${fileName}`;
+};
+
+const downloadFile = async (data, fileName) => {
+  const prettyJs = "const data = " + JSON.stringify(data, null, 2);
+
+  try {
+    // Open the IndexedDB database
+    const db = await openDatabase();
+    const transaction = db.transaction([objectStoreName], 'readwrite');
+    const objectStore = transaction.objectStore(objectStoreName);
+
+    const uniqueFileName = generateUniqueFileName(fileName);
+    const fileData = new Blob([prettyJs], { type: "text/javascript" });
+
+    // Store the file in IndexedDB with the unique key
+    const request = objectStore.add(fileData, uniqueFileName);
+
+    request.onsuccess = (event) => {
+      console.log('File stored in IndexedDB with unique key:', uniqueFileName);
+    };
+
+    request.onerror = (event) => {
+      console.error('Error storing file in IndexedDB:', event.target.error);
+    };
+  } catch (error) {
+    console.error('Error opening IndexedDB:', error);
   }
+};
+
+
+
+
 
   const updateRelayStatus = (relay, status, addToCount, relayStatusAndCount) => {
     if (relayStatusAndCount[relay] == undefined) {
