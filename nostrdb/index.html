@@ -1,17 +1,119 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 
 <head>
-    <title>IndexedDB Example</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stored Files</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #202124;
+        }
+
+        h1 {
+            text-align: left;
+            margin-top: 20px;
+            color: #908d8d;
+            font-size: large;
+            margin-left: 3%;
+        }
+
+        table {
+            width: 95%;
+            margin: 20px auto;
+           
+            border-collapse: collapse;
+            background-color: #202124;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            padding: 5px;
+            padding-top: 10px;
+            text-align: left;
+            color: #fbf9f9;
+            font-weight: 600;
+            font-size: small;
+        }
+
+        th {
+            background-color: #787575;
+            color: #202124;
+            
+        }
+
+        tr:nth-child(even) {
+            background-color: #202124;
+        }
+
+        .home {
+            position: absolute;
+            top: 20px;
+            right: 3%;
+        }
+
+        .home a {
+            display: inline-block;
+            padding: 5px 5px;
+            background-color: #0c53e2; /* Button background color */
+            color: #f0ecec; 
+            text-decoration: none;
+            border: none;
+            font-size: small;
+            font-weight: 600;
+            border-radius: 25px; 
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .home a:hover {
+            background-color: #0056b3; /* Button background color on hover */
+        }
+
+        button {
+            background-color: #0c53e2;
+            color: #f0ecec;
+            border: none;
+            padding: 5px 5px;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: background-color 0.3s;
+            font-weight: 600;
+            font-size: smaller;
+            
+        }
+
+        button:hover {
+            background-color: #327ac8;
+        }
+    </style>
 </head>
 
 <body>
-    <input type="file" id="file-upload" />
-    <button type="button" id="upload-button">Upload</button>
-    <button type="button" id="download-button">Download</button>
-    <ul id="fileList"></ul>
+    <h1>Backup Database</h1>
+    </h2>
+    
+    <div class="home">
+    <a href="/index.html">Home</a>
+    </div>
 
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Date & Time</th>
+                <th>Download</th>
+            </tr>
+        </thead>
+        <tbody id="fileList">
+            <!-- Table rows will be dynamically added here -->
+        </tbody>
+    </table>
     <script src="script.js"></script>
 </body>
 
