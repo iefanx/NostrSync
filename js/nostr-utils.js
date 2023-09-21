@@ -79,26 +79,37 @@ const downloadFile = async (data, fileName) => {
   try {
     // Open the IndexedDB database
     const db = await openDatabase();
-    const transaction = db.transaction([objectStoreName], 'readwrite');
+    const transaction = db.transaction([objectStoreName], "readwrite");
     const objectStore = transaction.objectStore(objectStoreName);
 
     const uniqueFileName = generateUniqueFileName(fileName);
     const fileData = new Blob([prettyJs], { type: "text/javascript" });
 
-    // Store the file in IndexedDB with the unique key
-    const request = objectStore.add(fileData, uniqueFileName);
+    // Create a metadata object to store time, data, and size
+    const metadata = {
+      time: new Date().toLocaleString(), // Current date and time
+      data: data, // The actual data
+      size: prettyJs.length, // Size of the data in characters
+    };
+
+    // Store the file and metadata in IndexedDB with the unique key
+    const request = objectStore.add(
+      { data: fileData, metadata },
+      uniqueFileName
+    );
 
     request.onsuccess = (event) => {
-      console.log('File stored in IndexedDB with unique key:', uniqueFileName);
+      console.log("File stored in IndexedDB with unique key:", uniqueFileName);
     };
 
     request.onerror = (event) => {
-      console.error('Error storing file in IndexedDB:', event.target.error);
+      console.error("Error storing file in IndexedDB:", event.target.error);
     };
   } catch (error) {
-    console.error('Error opening IndexedDB:', error);
+    console.error("Error opening IndexedDB:", error);
   }
 };
+
 
 
 
