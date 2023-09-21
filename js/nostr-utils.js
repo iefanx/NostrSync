@@ -185,6 +185,7 @@ const displayRelayStatus = (relayStatusAndCount) => {
   }
 };
 
+
 // fetch events from relay, returns a promise
 const fetchFromRelay = async (relay, filters, pubkey, events, relayStatus) =>
   new Promise((resolve, reject) => {
