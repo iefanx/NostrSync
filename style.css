@@ -238,6 +238,54 @@ input[type="file"]::-webkit-file-upload-button:hover {
 
 
 
+/* Style the toggle button container */
+.toggle-button {
+  display: inline-block;
+
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Hide the input checkbox */
+.toggle-button input[type="checkbox"] {
+  display: none;
+}
+
+/* Change the background color and text color when the toggle is checked */
+.toggle-button input[type="checkbox"]:checked+label {
+  background-color: #e82f0e;
+  color: white;
+}
+
+/* Style the label for the toggle switch */
+.toggle-button label {
+  display: inline-block;
+    padding: 5px 5px;
+    background-color: #0c53e2;
+    /* Button background color */
+    color: #f0ecec;
+    text-decoration: none;
+    border: none;
+    font-size: x-small;
+    font-weight: 600;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+/* Style the slider knob */
+.toggle-button input[type="checkbox"]+label::before {
+
+  display: none;
+  
+}
+
+/* Move the slider knob to the right when checked */
+.toggle-button input[type="checkbox"]:checked+label::before {
+  transform: translateX(20px);
+}
+
+
 footer p {
   margin: 0;
   padding: 10px;
