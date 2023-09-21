@@ -27,68 +27,65 @@ const formatSize = (sizeInBytes) => {
 // ...
 
 const displayFiles = async () => {
-    try {
-        const db = await openDatabase();
-        const transaction = db.transaction([objectStoreName], 'readonly');
-        const objectStore = transaction.objectStore(objectStoreName);
+  try {
+    const db = await openDatabase();
+    const transaction = db.transaction(["Backups"], "readonly");
+    const objectStore = transaction.objectStore("Backups");
 
-        const fileList = document.getElementById('fileList');
+    const fileList = document.getElementById("fileList");
 
-        // Clear the existing table rows
-        fileList.innerHTML = '';
+    // Clear the existing table rows
+    fileList.innerHTML = "";
 
-        // Retrieve all stored files
-        objectStore.openCursor().onsuccess = (event) => {
-            const cursor = event.target.result;
-            if (cursor) {
-                // Create a table row for each file
-                const tr = document.createElement('tr');
+    // Retrieve all stored files
+    objectStore.openCursor().onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        // Create a table row for each file
+        const tr = document.createElement("tr");
 
-                // Set a fixed file name as "nostr backup"
-                const fileName = 'Backup';
+        // File Name column
+        const fileNameTd = document.createElement("td");
+        fileNameTd.textContent = "backup files"; 
+        tr.appendChild(fileNameTd);
 
-                // File Name column
-                const fileNameTd = document.createElement('td');
-                fileNameTd.textContent = fileName;
-                tr.appendChild(fileNameTd);
+        // Metadata columns (Date, Time, Size)
+        const dateTd = document.createElement("td");
+        dateTd.textContent = cursor.value.date || "N/A";
+        tr.appendChild(dateTd);
 
-                // Retrieve and display the metadata (size, time)
-                const metadata = cursor.value ? cursor.value.metadata : {};
-                const fileSize = metadata && metadata.size ? formatSize(metadata.size) : 'N/A';
-                const fileTime = metadata && metadata.time ? metadata.time : 'N/A';
+        const timeTd = document.createElement("td");
+        timeTd.textContent = cursor.value.time || "N/A";
+        tr.appendChild(timeTd);
 
-                // Size column
-                const sizeTd = document.createElement('td');
-                sizeTd.textContent = fileSize;
-                tr.appendChild(sizeTd);
+        const sizeTd = document.createElement("td");
+        sizeTd.textContent = cursor.value.size
+          ? formatSize(cursor.value.size)
+          : "N/A";
+        tr.appendChild(sizeTd);
 
-                // Time column
-                const timeTd = document.createElement('td');
-                timeTd.textContent = fileTime;
-                tr.appendChild(timeTd);
+        // Actions column (Download button)
+        const actionsTd = document.createElement("td");
+        const downloadButton = document.createElement("button");
+        downloadButton.textContent = "Download";
+        downloadButton.addEventListener("click", () => {
+          downloadFile(cursor.key); // Trigger download when the button is clicked
+        });
+        actionsTd.appendChild(downloadButton);
+        tr.appendChild(actionsTd);
 
-                // Actions column (Download button)
-                const actionsTd = document.createElement('td');
-                const downloadButton = document.createElement('button');
-                downloadButton.textContent = 'Download';
-                downloadButton.addEventListener('click', () => {
-                    downloadFile(cursor.key); // Trigger download when the button is clicked
-                });
-                actionsTd.appendChild(downloadButton);
-                tr.appendChild(actionsTd);
+        // Append the table row to the file list
+        fileList.appendChild(tr);
 
-                // Append the table row to the file list
-                fileList.appendChild(tr);
-
-                cursor.continue();
-            }
-        };
-    } catch (error) {
-        console.error('Error opening IndexedDB:', error);
-    }
+        cursor.continue();
+      }
+    };
+  } catch (error) {
+    console.error("Error opening IndexedDB:", error);
+  }
 };
 
-// ...
+
 
 
 const downloadFile = async (fileName) => {
@@ -97,7 +94,7 @@ const downloadFile = async (fileName) => {
     const transaction = db.transaction([objectStoreName], "readonly");
     const objectStore = transaction.objectStore(objectStoreName);
 
-    // Retrieve the file by its unique key
+    // Retrieve the file by its unique key (fileName)
     const request = objectStore.get(fileName);
 
     request.onsuccess = (event) => {
@@ -105,7 +102,7 @@ const downloadFile = async (fileName) => {
 
       if (fileData) {
         // Create a blob URL for the file
-        const blob = new Blob([fileData.data], { type: "text/javascript" });
+        const blob = new Blob([fileData.content], { type: "text/javascript" });
         const url = window.URL.createObjectURL(blob);
 
         // Create an anchor element for downloading
@@ -126,6 +123,8 @@ const downloadFile = async (fileName) => {
     console.error("Error opening IndexedDB:", error);
   }
 };
+
+// ...
 
 // Call the displayFiles function when the page loads
 window.onload = displayFiles;
