@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html data-theme="light" lang="en">
+<html data-theme="dark" lang="en">
   <head>
     <meta charset="utf-8" />
     <link rel="manifest" href="/manifest.json" />
-
+    <script src="https://unpkg.com/idb@4.0.3/build/iife/index-min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Primary Meta Tags -->
     <title>NostrSync</title>
@@ -12,21 +12,15 @@
       name="description"
       content="Fetch, backup and broadcast your Nostr events" />
 
-    <!-- Favicon -->
-    <link
-      rel="shortcut icon"
-      https://res.cloudinary.com/dfquzutga/image/upload/v1677188210/Screenshot_20230224_030530_Canva_2_cwvo5m.jpg
-      
-      type="image/x-icon" />
+   
+    
     <!-- CSS -->
     <link rel="stylesheet" href="style.css" />
     <!-- Lightning -->
     <meta name="lightning" content="realiefan@ln.tips" />
     <!-- PWA -->
-    <meta name="theme-color" content="#ffffff" />
-    <link
-      rel="apple-touch-icon"
-      href="https://nostr-utils.pages.dev/img/broadcast.png" />
+    <meta name="theme-color" content="#202124" />
+    
     
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -47,20 +41,22 @@
         </div>
 
       </div>
-      <h2><b>NostrSync</b> offers an <b>Broadcast & Export Service</b> that allows you to <b>Download a 
+      <h2><b>NostrSync.live</b> offers an <b>Broadcast & Export Service</b> that allows you to <b>Download a 
         Copy of your Data</b> & when you use this service, all of your data will also be <b>Broadcasted to Major Relays</b> 
          on the network. <br><br>This design ensures that the data is <b> Widely Distributed</b> 
          and makes it more <b>Resistant to Censorship.</b> 
       </h2>
       <div class="dataBase">
+
         <div class="toggle-button">
           <input type="checkbox" id="relayToggle">
-          <label for="relayToggle">DEEP SYNC</label>
+          <label for="relayToggle">DeepSync</label>
         </div>
-
       
-      <a href="/nostrdb/index.html">Database</a>
+      <a href="/nostrdb/index.html" class="db-btn">LocalDatabase</a>
+      
       </div>
+      
 
       <div>
         <form>
@@ -103,9 +99,11 @@
             </form>
           </div>
           
-          <style>
+         
             
-            </style>
+
+
+
         
             <p>
               <button
@@ -175,22 +173,23 @@
 
         <p>Please note that our data export service is a best-effort service and not 
           a complete backup. While we do our best to ensure that all data is included
-           in the export, we cannot guarantee that all data will be exported."</p>
+           in the export, we cannot guarantee that all data will be exported.</p>
         </h4>
         
       </footer>
     </main>
-   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/js/sw.js')
-        .then(function (registration) {
-          console.log('Service Worker registered with scope:', registration.scope);
-        })
-        .catch(function (error) {
-          console.error('Service Worker registration failed:', error);
-        });
-    }
-  </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/js/sw.js')
+          .then(function (registration) {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(function (error) {
+            console.error('Service Worker registration failed:', error);
+          });
+      }
+    </script>
 
 
 
