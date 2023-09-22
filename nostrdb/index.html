@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stored Files</title>
+    <title>NostrSync</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,9 +16,18 @@
         h1 {
             text-align: left;
             margin-top: 20px;
-            color: #908d8d;
+            color: #bebbbb;
             font-size: large;
             margin-left: 3%;
+        }
+
+         h2 {
+            text-align: left;
+            margin-top: 20px;
+            color: #cdcbcb;
+            font-size: smaller;
+            margin: 3%;
+            font-weight: 300;
         }
 
 
@@ -30,6 +39,7 @@
             border-collapse: collapse;
             background-color: #202124;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            
         }
 
         th,
@@ -40,11 +50,13 @@
             color: #fbf9f9;
             font-weight: 600;
             font-size: small;
+            
         }
 
         th {
             background-color: #787575;
             color: #202124;
+            
             
             
         }
@@ -78,7 +90,7 @@
         }
 
         button {
-            background-color: #0c53e2;
+            background-color: #434547;
             color: #f0ecec;
             border: none;
             padding: 5px 5px;
@@ -93,15 +105,27 @@
         button:hover {
             background-color: #327ac8;
         }
+
+        #file-input{
+            font-weight: 600;
+            color: aliceblue;
+
+        }
+
+        
     </style>
 </head>
 
 <body>
-    <h1>Backup Database</h1>
+    <h1>NostrSync Database</h1>
+    </h2>
+    <h2><b>NostrSync database</b> will help you organize and manage your <b>backup files within this App.</b> Everything will be <b>stored locally,</b>
+        and you can also  <b> access this data offline</b>
+        
     </h2>
     
     <div class="home">
-    <a href="/index.html">Home</a>
+    <a href="file:///Users/iefan/Desktop/Nostryfied-main%202/index.html">Home</a>
     </div>
 
     <table>
@@ -117,6 +141,9 @@
         <tbody id="fileList">
             <!-- Table rows will be dynamically added here -->
         </tbody>
+       
+
+
     </table>
     <script src="script.js"></script>
 </body>
