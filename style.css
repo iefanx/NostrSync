@@ -68,7 +68,7 @@ a {
   background-color: var(--color-primary);
   color: var(--color-text);
   text-decoration: none;
-  text-transform: uppercase;
+ 
   border-radius: 0.3em;
   font-weight: 700;
   letter-spacing: .5px;
@@ -97,14 +97,14 @@ button:hover {
 .dataBase a {
   display: inline-block;
   padding: 5px 5px;
-  background-color: #0c53e2;
-  /* Button background color */
+  background-color: #434547;
   color: #f0ecec;
   text-decoration: none;
   border: none;
   font-size: x-small;
   font-weight: 600;
   border-radius: 25px;
+  margin-left: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -261,7 +261,7 @@ input[type="file"]::-webkit-file-upload-button:hover {
 .toggle-button label {
   display: inline-block;
     padding: 5px 5px;
-    background-color: #0c53e2;
+    background-color: #434547;
     /* Button background color */
     color: #f0ecec;
     text-decoration: none;
