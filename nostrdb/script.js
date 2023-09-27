@@ -46,7 +46,7 @@ const displayFiles = async () => {
 
         // File Name column
         const fileNameTd = document.createElement("td");
-        fileNameTd.textContent = "backup files"; 
+        fileNameTd.textContent = "Backup"; 
         tr.appendChild(fileNameTd);
 
         // Metadata columns (Date, Time, Size)
