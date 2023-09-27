@@ -50,6 +50,11 @@ const fetchAndBroadcast = async () => {
   // inform user that backup file (js format) is being downloaded
   $('#file-download').html(txt.download)
   downloadFile(data, 'nostr-backup.js')
+
+   $("#file-download").html(txt.download);
+   downloadFileCopy(data, "nostr-backup.js");
+  
+  
   // inform user that app is broadcasting events to relays
   $('#broadcasting-status').html(txt.broadcasting)
   // show and update broadcasting progress bar
