@@ -19,7 +19,7 @@ const openDatabase = () => {
 
 const formatSize = (sizeInBytes) => {
   const sizeInMB = sizeInBytes / (1024 * 1024); // Convert bytes to megabytes
-  return sizeInMB.toFixed(2) + " MB"; // Format to two decimal places
+  return sizeInMB.toFixed(2); // Format to two decimal places
 };
 
 // displayStoredFiles.js
