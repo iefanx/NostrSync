@@ -40,52 +40,25 @@ const parsePubkey = (pubkey) =>
 
   
   
-
- // Function to open the IndexedDB database
+// Function to open the IndexedDB database
 async function openDatabase() {
-  return new Promise((resolve, reject) => {
-    const request = window.indexedDB.open("NostrDB", 2); // Incremented the version number
-
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
+  const dbPromise = idb.openDB("NostrDB", 2, {
+    upgrade(db) {
       if (!db.objectStoreNames.contains("Backups")) {
         db.createObjectStore("Backups", { keyPath: "name" });
       }
-    };
-
-    request.onsuccess = (event) => {
-      const db = event.target.result;
-      resolve(db);
-    };
-
-    request.onerror = (event) => {
-      reject(event.target.error);
-    };
+    },
   });
+
+  return dbPromise;
 }
 
 // Function to store a file in IndexedDB
 async function storeFile(db, fileObject) {
-  return new Promise((resolve, reject) => {
-    // Step 1: Create a transaction for the "Backups" object store
-    const transaction = db.transaction(["Backups"], "readwrite");
-
-    // Step 2: Get the object store
-    const store = transaction.objectStore("Backups");
-
-    // Step 3: Put the fileObject into the object store
-    const request = store.put(fileObject);
-
-    // Step 4: Handle the success event
-    request.onsuccess = () => {
-      resolve(); // Resolve the promise indicating success
-    };
-
-    // Step 5: Handle any errors that may occur
-    request.onerror = (event) => {
-      reject(event.target.error); // Reject the promise with an error
-    };
-  });
+  const tx = db.transaction("Backups", "readwrite");
+  const store = tx.objectStore("Backups");
+  await store.put(fileObject);
+  await tx.done;
 }
 
 // Function to generate a unique file name
@@ -116,27 +89,25 @@ async function downloadFile(data, originalFileName) {
     // Step 3: Create a Blob from the formatted JavaScript string
     const taBlob = new Blob([prettyJs], { type: "text/javascript" });
 
-
-    // Step 5: Optionally, store the file in IndexedDB (if needed)
+    // Step 4: Optionally, store the file in IndexedDB (if needed)
     const fileObject = {
-      name: uniqueFileName, // Use the generated unique file name
+      name: uniqueFileName,
       content: taBlob,
-      size: taBlob.size, // Store the size of the file
-      date: new Date().toLocaleDateString(), // Store the date as a string
-      time: new Date().toLocaleTimeString(), // Store the time as a string
+      size: taBlob.size,
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
     };
 
-    // Step 6: Optionally, open a connection to the IndexedDB database
+    // Step 5: Optionally, open a connection to the IndexedDB database
     const db = await openDatabase();
 
-    // Step 7: Optionally, store the file object in IndexedDB
+    // Step 6: Optionally, store the file object in IndexedDB
     await storeFile(db, fileObject);
   } catch (error) {
     console.error("Error while downloading and storing the file:", error);
     // Handle the error, possibly by showing a user-friendly message
   }
 }
-
 
 
 
