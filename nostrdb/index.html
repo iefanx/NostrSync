@@ -7,63 +7,53 @@
     <title>NostrSync</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Courier New', monospace;
             margin: 0;
             padding: 0;
-            background-color: #202124;
+            background-color: #0a0a0a;
+            color: #00ff00;
+            width: 100vh;
         }
 
         h1 {
-            text-align: left;
+            text-align: center;
             margin-top: 20px;
-            color: #bebbbb;
-            font-size: large;
-            margin-left: 3%;
+            font-size: 36px;
         }
 
-         h2 {
-            text-align: left;
-            margin-top: 20px;
-            color: #cdcbcb;
-            font-size: smaller;
-            margin: 3%;
-            font-weight: 300;
-            line-height: 15pt;
+        h2 {
+            text-align: center;
+            color: #00ff00;
+            font-size: 18px;
+            margin: 10px;
         }
-
-
 
         table {
             width: 95%;
             margin: 20px auto;
-           
             border-collapse: collapse;
-            background-color: #202124;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            
+            background-color: #1f1f1f;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
         }
 
         th,
         td {
-            padding: 5px;
-            padding-top: 10px;
+            padding: 10px;
             text-align: left;
-            color: #fbf9f9;
+            color: #00ff00;
             font-weight: 600;
-            font-size: small;
-            
         }
 
         th {
-            background-color: #787575;
-            color: #202124;
-            
-            
-            
+            background-color: #00ff00;
+            color: #1f1f1f;
+            text-transform: uppercase;
+            font-size: 14px;
         }
 
         tr:nth-child(even) {
-            background-color: #202124;
+            background-color: #1f1f1f;
         }
 
         .home {
@@ -74,60 +64,55 @@
 
         .home a {
             display: inline-block;
-            padding: 3px 5px;
-            background-color: #0c53e2; /* Button background color */
-            color: #f0ecec; 
+            padding: 5px 10px;
+            background-color: #00ff00;
+            color: #1f1f1f;
             text-decoration: none;
             border: none;
-            font-size: small;
             font-weight: 600;
-            border-radius: 25px; 
+            border-radius: 25px;
             cursor: pointer;
             transition: background-color 0.3s;
-            box-shadow: #202124;
+            font-size: 14px;
         }
 
         .home a:hover {
-            background-color: #0056b3; /* Button background color on hover */
+            background-color: #009900;
         }
 
         button {
-            background-color: #434547;
-            color: #f0ecec;
-            border: none;
-            padding: 5px 5px;
+            background-color: #1f1f1f;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px 20px;
             cursor: pointer;
             border-radius: 25px;
             transition: background-color 0.3s;
             font-weight: 600;
-            font-size: smaller;
-            
+            font-size: 14px;
         }
 
         button:hover {
-            background-color: #327ac8;
+            background-color: #009900;
         }
 
-        #file-input{
+        #file-input {
             font-weight: 600;
-            color: aliceblue;
-
+            color: #00ff00;
         }
-
-        
     </style>
 </head>
 
 <body>
     <h1>NostrSync Database</h1>
+    <h2>
+        <b>NostrSync database</b> will help you organize and manage your <b>backup files within this App.</b> Everything
+        will
+        be <b>stored locally,</b> and you can also <b>access this data offline.</b>
     </h2>
-    <h2><b>NostrSync database</b> will help you organize and manage your <b>backup files within this App.</b> Everything will be <b>stored locally,</b>
-        and you can also  <b> access this data offline.</b>
-        
-    </h2>
-    
+
     <div class="home">
-    <a href="/index.html">Home</a>
+        <a href="/index.html">Home</a>
     </div>
 
     <table>
@@ -143,9 +128,6 @@
         <tbody id="fileList">
             <!-- Table rows will be dynamically added here -->
         </tbody>
-       
-
-
     </table>
     <script src="script.js"></script>
 </body>
