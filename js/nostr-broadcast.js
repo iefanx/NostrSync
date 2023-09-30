@@ -42,8 +42,20 @@ const fetchAndBroadcast = async () => {
   $('#fetching-progress').val(relays.length)
 
   const latestKind3 = data.filter((it) => it.kind == 3 && it.pubkey === pubkey)[0]  
-  const myRelaySet = JSON.parse(latestKind3.content)
-  relays = Object.keys(myRelaySet).filter(url => myRelaySet[url].write).map(url => url)
+ try {
+   const myRelaySet = JSON.parse(latestKind3.content);
+
+   // Continue with your code to work with the parsed JSON data
+   relays = Object.keys(myRelaySet)
+     .filter((url) => myRelaySet[url].write)
+     .map((url) => url);
+
+   $("#checking-relays-header-box").css("display", "none");
+   $("#checking-relays-box").css("display", "none");
+ } catch (error) {
+   console.error("Error parsing JSON:", error);
+   // Handle the error gracefully, e.g., display an error message to the user or take appropriate action.
+ }
 
   $('#checking-relays-header-box').css('display', 'none')
   $('#checking-relays-box').css('display', 'none')
