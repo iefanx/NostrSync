@@ -71,9 +71,53 @@ const fixedRelays = [
   "wss://nostrelay.yeghro.site",
   "wss://relay.nostr.vet",
   "wss://nostr.yuv.al",
+  "wss://relay.lacosanostr.com",
+  "wss://nostrue.com",
+  "wss://nostr.danvergara.com",
+  "wss://n.xmr.se",
+  "wss://nproxy.kristapsk.lv",
+  "wss://nostr.topeth.info",
+  "wss://relay.orange-crush.com",
+  "wss://nostr.screaminglife.io",
+  "wss://nostr.roundrockbitcoiners.com",
+  "wss://relay.f7z.io",
+  "wss://nostr.shawnyeager.net",
+  "wss://relay.nostriches.org",
+  "wss://relay.nostrology.org",
+  "wss://nostr.kollider.xyz",
+  "wss://nostr.bch.ninja",
+  "wss://relay.nostrati.com",
+  "wss://relay.snort.social",
+  "wss://nostr.lu.ke",
+  "wss://atlas.nostr.land",
+  "wss://nostr.ownbtc.online",
+  "wss://nostr.fmt.wiz.biz",
+  "wss://nostr.actn.io",
+  "wss://nostr.688.org",
+  "wss://global-relay.cesc.trade",
+  "wss://nostr.pjv.me",
+  "wss://rsslay.nostr.net",
+  "wss://rsslay.nostr.moe",
+  "wss://relay.roli.social",
+  "wss://brb.io",
+  "wss://eden.nostr.land",
+  "wss://nostr-verified.wellorder.net",
+  "wss://nostr.noones.com",
+  "wss://relay.nostr.nu",
+  "wss://nostr.w3ird.tech",
+  "wss://nostr-relay.bitcoin.ninja",
+  "wss://paid.no.str.cr",
+  "wss://deschooling.us",
+  "wss://foolay.nostr.moe",
+  "wss://nostr.mikedilger.com",
+  "wss://freespeech.casa",
+  "wss://bitcoiner.social",
+  "wss://nostr.1f52b.xyz",
+  "wss://nostr.sebastix.dev",
+  "wss://relay-verified.deschooling.us",
 ];
 
-var relays = []
+var relays = [];
 
 function updateRelays() {
   const showAllRelays = document.getElementById("relayToggle").checked;
@@ -93,8 +137,6 @@ function updateRelays() {
     displayRelays();
   }
 }
-
-
 
 // Initial call to populate relays array
 updateRelays();
