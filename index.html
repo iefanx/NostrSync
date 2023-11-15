@@ -1,187 +1,138 @@
 <!DOCTYPE html>
-<html data-theme="dark" lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="manifest" href="/manifest.json" />
-    <script src="https://unpkg.com/idb@4.0.3/build/iife/index-min.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Primary Meta Tags -->
-    <title>NostrSync</title>
-    <meta name="title" content="Nostr Backup Service by NostrSync" />
-    <meta
-      name="description"
-      content="Fetch, backup and broadcast your Nostr events" />
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" type="text/css" href="paywall.css?v=1.2">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-   
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="style.css" />
-    <!-- Lightning -->
-    <meta name="lightning" content="realiefan@ln.tips" />
-    <!-- PWA -->
-    <meta name="theme-color" content="#202124" />
-    
-    
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NostrSync</title>
-    
-    
-  </head>
+  <link rel="manifest" href="manifest.json">
 
-  <body>
+  <title>Zapit</title>
+</head>
+
+<body>
+  
+  
+  <form id="paywall-form">
     
-    <main class="container">
-      <div class="header-space">
-        <div class="header">
-          <div class="logo-container">
-            <img src="icon.png" alt="" class="logo">
+    <div class="header">
+      <img src="logo.png" alt="Your Logo" id="logo">
+      <button type="button" id="toggleButton">Login</button>
+    </div>
+    
+    <div id="hiddenElements" class="hidden">
+      <h3><b>One-time login,</b> enter your <b>login key and Zapit Wallet ID</b> that you received
+         during <b>account creation.</b> If you are a new user, <b>click on 'Create New User'.</b></h3> 
+      <button type="button" id="my-button2" onclick="window.location.href='https://signup.zapit.live/'">Create New User</button><br>
+      <input type="password" id="api-key" name="api-key" placeholder="Login key"><br>
+      <input type="password" id="wallet-id" name="wallet-id" placeholder="Wallet id"><br>
+      <label for="rememberApiKey">Keep Login:</label>
+      <input type="checkbox" id="rememberApiKey" name="rememberApiKey" checked>
+      <button id="delete-btn">Log out</button>
+      <div class="wrapper">
+        <div class="divider div-transparent"></div></div>
+      <hr> <!-- Add horizontal rule here -->
+    </div>
+  
+    <h2>Put any content behind <mark> Bitcoin lightning paywall.</mark>
+      <br> Any content such as Blog, Videos, Audio, Picture & PDF. Create paywalled
+       link & share it Everywhere. </h2>
+      
+       <input type="text" id="memo" name="memo" placeholder="Heading" required><br>
+       <textarea id="description" name="description" placeholder="Description" required rows="3"></textarea><br>
+
+     
+       <div class="input-container">
+        <input type="text" id="url" name="url" placeholder="Media URL" required>
+        <button2 id="createLinkBtn" class="media-button">Create Link</button2>  
+      </div>
+      <div id="myModal" class="modal2">
+        <div class="modal-content-wrapper">
+          <div class="modal-content2">
+           <span class="close">&times;</span>
+            <h4>Create media link using Media Uploader, Create, Copy & Paste it here. Remember all this data will be public. For private upload use your own uploader.</h4>
+            <div class="button-container">
+              <button1 id="openWebsiteBtn" class="link-button">Nostr.build</button1>
+            </div>
           </div>
-          <h1>NostrSync</h1>
         </div>
+      </div> 
 
-      </div>
-      <h2><b>NostrSync.live</b> offers an <b>Broadcast & Export Service</b> that allows you to <b>Download a 
-        Copy of your Data</b> & when you use this service, all of your data will also be <b>Broadcasted to Major Relays</b> 
-         on the network. <br><br>This design ensures that the data is <b> Widely Distributed</b> 
-         and makes it more <b>Resistant to Censorship.</b> 
-      </h2>
-      <div class="dataBase">
-
-        <div class="toggle-button">
-          <input type="checkbox" id="relayToggle">
-          <label for="relayToggle">DeepSync</label>
-        </div>
       
-      <a href="/nostrdb/index.html" class="db-btn">LocalDatabase</a>
-      
-      </div>
-      
-
-      <div>
-        <form>
-          <div>
-            <form>
-              <div class="space-between">
-                <p>
-                  <input
-                    type="text"
-                    id="pubkey"
-                    name="pubkey"
-                    onchange="pubkeyOnChange()"
-                    placeholder="Public key (npub or hex)"
-                    
-                    required />
-                </p>
-              </div>
-              <div class="space-between-small">
-                <div class="space-between">
-                  <b>OR</b>
-                </div>
-              </div>
-              <div class="space-between-small">
-                <div class="space-between">
-                  <p>
-                    <input type="file" class="file-selector" id="file-selector">
-                  </p>
-                  <script>
-                    var fileName = ""
-      
-                    const fileSelector = document.getElementById('file-selector');
-                    fileSelector.addEventListener('change', (event) => {
-                      fileName = event.target.files[0];
-                      $('#fetch-and-broadcast').css('display', 'none')
-                      $('#just-broadcast').css('display', 'inline-block')
-                    });
-                  </script>
-                </div>
-              </div>
-            </form>
+      <div id="newModal" class="modal3">
+        <div class="modal-content-wrapper">
+          <div class="modal-content3">
+            <span class="close">&times;</span>
+            <h4>Recommended: Create a Zapit PWA app for better experience, After this you can use it like a Native application & always up-to-date. </h4>
+             <div class="button-container">
+              <button1 type="button" id="installPWA" class="common-button">Install on Android & PC</button1>   
+             </div>
+             <h4><mark>IOS & Safari User</mark></h4>
+             <h4>On Safari Click one "Share icon" on top right corner & than click on "Add to Home Screen". Done! </h4> 
           </div>
-          
-         
-            
-
-
-
-        
-            <p>
-              <button
-                id="fetch-and-broadcast"
-                onclick="fetchAndBroadcast(); return false;">
-                Backup & Broadcast
-              </button>
-              <button
-                id="just-broadcast"
-                onclick="justBroadcast(fileName); return false;" 
-                style="display: none">
-                Broadcast from File
-              </button>
-              <button
-                id="get-from-extension"
-                onclick="getFromExtension(); return false;"
-                style="display: none">
-                Get from extension
-              </button>
-            </p>
-          </div>
-        </form>
-      </div>
-      <div class="box">
-        <div class="box-content">
-          <p id="fetching-status"></p>
-          <p style="padding-top: 2px">
-            <progress
-              type="range"
-              id="fetching-progress"
-              name="fetching-progress"
-              min="0"
-              max="180"
-              value="0"
-              style="visibility: hidden" />
-          </p>
-        </div>
-        <div class="box-content" id="checking-relays-header-box">
-          <p id="checking-relays-header"></p>
-        </div>
-        <div class="box-content" id="checking-relays-box">
-          <p id="checking-relays"></p>
-        </div>
-        <div class="box-content">
-          <p id="file-download"></p>
-          <p id="events-found"></p>
-        </div>
-        <div class="box-content">
-          <p id="broadcasting-status"></p>
-          <p style="padding-top: 2px">
-            <progress
-              type="range"
-              id="broadcasting-progress"
-              name="broadcasting-progress"
-              min="0"
-              max="180"
-              value="0"
-              style="visibility: hidden" />
-          </p>
         </div>
       </div>
+     </div>
+     
       
       
+    
+    
 
-      <footer>
-      <h5>
+     <style>
+      .input-wrapper {
+        position: relative;
+      }
+    
+      .corner-text {
+        position: absolute;
+        right: 5px;
+        top: 45%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        color: #e9910e;
+        margin-right: 5%;
+        font-family: 'Roboto', sans-serif, 'arial';
 
-        <p>Please note that our data export service is a best-effort service and not 
-          a complete backup. While we do our best to ensure that all data is included
-           in the export, we cannot guarantee that all data will be exported.</p>
-        </h4>
-        
-      </footer>
-    </main>
+      }
+    </style>
+    
+    <div class="input-wrapper">
+      <input type="text"  id="amount" name="amount" placeholder="Minimum Price" required>
+      <span class="corner-text">Sats</span>
+    </div>
+    
 
+
+    <label for="remembers" style="display:none;">Remember user:</label>
+    <input type="checkbox" id="remembers" name="remembers" checked style="display:none;"><br>
+    
+    <button type="submit" onclick="showResponse()">Monetize</button>
+    <div id="response"></div>
+  </form>  
+    <hr>
+    <div class="button-container">
+      <button id="newButton" class="common-button">Download</button>
+      <button id="otherButton" class="common-button">Marketplace</button>
+      <button id="open-wallet-btn" class="common-button">Wallet</button>
+      <button id="opensplit" class="common-button">SplitPayment</button>
+    </div>
+    
     <script>
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        document.getElementById('newButton').style.display = 'none';
+      }
+      </script> 
+</footer>
+<h3>Create <b>Login key,</b> paste <b>Media URl</b> you want to monetize, <b>set minimum price</b> & Click <b>Monetize</b>. <b>Share the Paywalled link Anywhere. </b><br><BR> Developed by <a href="https://nostrplebs.com/s/iefan" target="_blank" rel="noopener noreferrer">iefan</a> for Nostriches.</h3>
+
+  <!-- Add the scripts -->
+<script src="app.js"></script>
+  
+ 
+  <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/js/sw.js')
+        navigator.serviceWorker.register('/public/service-worker.js')
           .then(function (registration) {
             console.log('Service Worker registered with scope:', registration.scope);
           })
@@ -189,15 +140,9 @@
             console.error('Service Worker registration failed:', error);
           });
       }
-    </script>
-
-
-
-    <script src="https://bundle.run/buffer@6.0.3"></script>
-    <script src="https://bundle.run/bech32@2.0.0"></script>
-    <script src="https://nostr-utils.pages.dev/js/jquery-3.6.2.min.js"></script>
-    <script src="js/nostr-utils.js"></script>
-    <script src="js/relays.js"></script>
-    <script src="js/nostr-broadcast.js"></script>
-  </body>
+  </script>
+ 
+  
+  
+</body>
 </html>
