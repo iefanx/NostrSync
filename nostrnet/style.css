@@ -135,19 +135,22 @@ footer {
 
 .box {
   background-color: #000000;
-  padding: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
   border-radius: 10px;
   box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
   animation: slideUp 0.5s ease-in-out forwards;
+  font-family: 'Courier New', Courier, monospace;
+  width: 70%;
 }
 
 
 #fetching-progress {
-  height: 10px;
+ 
 
   border-radius: 5px;
-  overflow: hidden;
-  color: #000;
+
+
 
 }
 
@@ -180,12 +183,12 @@ footer {
   border: none;
   border-radius: 4px;
   box-sizing: border-box;
-  min-width: 100%;
+  
   margin: 0 auto;
   display: block;
   color: var(--color-text);
   background-color: #000000;
-  width: 290px;
+  width: 350px;
   box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
   animation: slideUp 0.5s ease-in-out forwards;
 }
