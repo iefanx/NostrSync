@@ -35,7 +35,7 @@
       <div class="header-space">
         <div class="header">
           <div class="logo-container">
-            
+            <img src="/icon.png" alt="" class="logo">
           </div>
           <h1>NostrNet Backup
           </h1>
@@ -114,6 +114,18 @@
             
 
           </style>
+          <script>
+            function toggleFileInput() {
+              var fileInput = document.getElementById('file-selector');
+
+              // Toggle the visibility of the file input
+              if (fileInput.style.display === 'none' || fileInput.style.display === '') {
+                fileInput.style.display = 'block';
+              } else {
+                fileInput.style.display = 'none';
+              }
+            }
+          </script>
 
           
          
@@ -123,72 +135,47 @@
 
         
             <p>
-              <button
-                id="fetch-and-broadcast"
-                onclick="fetchAndBroadcast(); return false;">
+              <button id="fetch-and-broadcast" onclick="fetchAndBroadcast(); return false;">
                 Backup & Broadcast
               </button>
-              <button
-                id="just-broadcast"
-                onclick="justBroadcast(fileName); return false;" 
-                style="display: none">
+              <button id="just-broadcast" onclick="justBroadcast(fileName); return false;" style="display: none">
                 Broadcast from File
               </button>
-              <button
-                id="get-from-extension"
-                onclick="getFromExtension(); return false;"
-                style="display: none">
+              <button id="get-from-extension" onclick="getFromExtension(); return false;" style="display: none">
                 Get from extension
               </button>
             </p>
-          </div>
-        </form>
-      </div>
-      <div class="box">
-        <div class="box-content">
-          <p id="fetching-status"></p>
-          <p style="padding-top: 2px">
-            <progress
-              type="range"
-              id="fetching-progress"
-              name="fetching-progress"
-              min="0"
-              max="180"
-              value="0"
-              style="visibility: hidden" />
-          </p>
-        </div>
-        <div class="box-content" id="checking-relays-header-box">
-          <p id="checking-relays-header"></p>
-        </div>
-        <div class="box-content" id="checking-relays-box">
-          <p id="checking-relays"></p>
-        </div>
-        <div class="box-content">
-          <p id="file-download"></p>
-          <p id="events-found"></p>
-        </div>
-        <div class="box-content">
-          <p id="broadcasting-status"></p>
-          <p style="padding-top: 2px">
-            <progress
-              type="range"
-              id="broadcasting-progress"
-              name="broadcasting-progress"
-              min="0"
-              max="180"
-              value="0"
-              style="visibility: hidden" />
-          </p>
-        </div>
-      </div>
+            </div>
+            </form>
+            </div>
+            <div class="box">
+              <div class="box-content">
+                <p id="fetching-status"></p>
+                <p style="padding-top: 2px">
+                  <progress type="range" id="fetching-progress" name="fetching-progress" min="0" max="180" value="0"
+                    style="visibility: hidden" />
+                </p>
+              </div>
+              <div class="box-content" id="checking-relays-header-box">
+                <p id="checking-relays-header"></p>
+              </div>
+              <div class="box-content" id="checking-relays-box">
+                <p id="checking-relays"></p>
+              </div>
+              <div class="box-content">
+                <p id="file-download"></p>
+                <p id="events-found"></p>
+              </div>
+              <div class="box-content">
+                <p id="broadcasting-status"></p>
+                <p style="padding-top: 2px">
+                  <progress type="range" id="broadcasting-progress" name="broadcasting-progress" min="0" max="180" value="0"
+                    style="visibility: hidden" />
+                </p>
+              </div>
+            </div>
       
-      
-
-     
     </main>
-
-
 
 
     <script src="https://bundle.run/buffer@6.0.3"></script>
