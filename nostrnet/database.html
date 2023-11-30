@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NostrSync Database</title>
+  <style>
+    body {
+      font-family: Google Sans, Helvetica Neue, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #212121;
+      color: #b6b6b6;
+    }
+
+    h1 {
+      text-align: left;
+      margin-top: 20px;
+      font-size: 24px;
+      margin-left: 3%;
+      background: linear-gradient(90deg, #7f7dd1, #548dd9 100%, #548dd9 0);
+      -webkit-background-clip: text;
+      color: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 25px;
+      font-weight: 600;
+      animation: slideDown 0.5s ease-in-out forwards;
+
+
+    }
+
+    h2 {
+      text-align: left;
+      margin-top: 10px;
+      font-size: 14px;
+      margin-left: 3%;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    table {
+      width: 95%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background-color: #000;
+
+      animation: slideUp 0.5s ease-in-out forwards;
+      box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+
+    }
+
+    th,
+    td {
+      padding: 7px;
+      text-align: center;
+      color: #b8b8b8;
+      font-weight: 800;
+      font-size: 12px;
+
+    }
+
+    th {
+      background-color: #222;
+    }
+
+    tr:nth-child(even) {
+      background-color: #111;
+
+    }
+
+    .home {
+      position: absolute;
+      top: 20px;
+      right: 3%;
+    }
+
+    .home a {
+      display: inline-block;
+      padding: 6px 12px;
+      background: linear-gradient(90deg, #7f7dd1, #548dd9 100%, #548dd9 0);
+      color: #000;
+      text-decoration: none;
+      border: none;
+      font-size: 14px;
+      font-weight: 800;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+    }
+
+    .home a:hover {
+      background-color: #000000;
+    }
+
+    button {
+      background: linear-gradient(90deg, #7f7dd1, #548dd9 100%, #548dd9 0);
+      ;
+      color: #000000;
+      border: none;
+      padding: 5px 8px;
+      cursor: pointer;
+      border-radius: 25px;
+      transition: background-color 0.3s;
+      font-weight: 600;
+      font-size: 10px;
+      box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+    }
+
+    button:hover {
+      background-color: #202020;
+    }
+
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideRight {
+      from {
+        transform: translatex(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translatex(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideLeft {
+      from {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+    <h1>Backup Database</h1>
+    <h2>
+        <b>NostrSync database</b> will help you organize and manage your <b>backup files within this App.</b> Everything
+        will be
+        <b>stored locally,</b>
+        and you can also <b>access this data offline.</b>
+    </h2>
+
+    <div class="home">
+        <a href="/nostrnet/nostrnet.html">Home</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Size (MB)</th>
+                <th>Download</th>
+            </tr>
+        </thead>
+        <tbody id="fileList">
+            <!-- Table rows will be dynamically added here -->
+        </tbody>
+    </table>
+    <script src="/nostrdb/script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+
+    <script src="https://unpkg.com/idb@4.0.3/build/iife/index-min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Primary Meta Tags -->
+    <title>NostrSync</title>
+    <meta name="title" content="Nostr Backup Service by NostrSync" />
+    <meta
+      name="description"
+      content="Fetch, backup and broadcast your Nostr events" />
+
+   
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/nostrnet/style.css" />
+    <!-- Lightning -->
+    <meta name="lightning" content="realiefan@ln.tips" />
+    <!-- PWA -->
+    <meta name="theme-color" content="#202124" />
+    
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NostrSync</title>
+    
+    
+  </head>
+
+  <body>
+    
+    <main class="container">
+      <div class="header-space">
+        <div class="header">
+          <div class="logo-container">
+            <img src="/icon.png" alt="" class="logo">
+          </div>
+          <h1>NostrNet Backup
+          </h1>
+        </div>
+
+      </div>
+      <h2>This feature will download all your <b>Nostr data from all the relays, create a copy, and broadcast it to all the Nostr relays.</b> The copy will also be stored in the
+         <b>local database</b> You can minimize this <b>but don't close the NostrNet app.</b> 
+      </h2>
+      <div class="dataBase">
+
+        <div class="toggle-button">
+          <input type="checkbox" id="relayToggle">
+          <label for="relayToggle">DeepSync</label>
+        </div>
+      
+      <a href="/nostrnet/database.html" class="db-btn">LocalDatabase</a>
+      <div id="toggleFileInput" class="toggle-button" onclick="toggleFileInput()"> <label> Restore</label></div>
+      
+      </div>
+      
+
+      <div>
+        <form>
+          <div>
+            <form>
+              <div class="space-between">
+                <p>
+                  <input
+                    type="text"
+                    id="pubkey"
+                    name="pubkey"
+                    onchange="pubkeyOnChange()"
+                    placeholder="Public key (npub or hex)"
+                    
+                    required />
+                </p>
+              </div>
+              <div class="space-between-small">
+                
+              </div>
+              <div class="space-between-small">
+                <div class="space-between">
+                 
+                <!-- Add a button to toggle the file input -->
+            <!-- Use a div as a toggle element -->
+            
+            
+            <!-- Add a file input with a class to control visibility -->
+            <input type="file" class="file-selector hidden" id="file-selector">
+
+
+                
+                  <script>
+                    var fileName = ""
+      
+                    const fileSelector = document.getElementById('file-selector');
+                    fileSelector.addEventListener('change', (event) => {
+                      fileName = event.target.files[0];
+                      $('#fetch-and-broadcast').css('display', 'none')
+                      $('#just-broadcast').css('display', 'inline-block')
+                    });
+                  </script>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          
+
+          <style>
+            /* Define a CSS class to hide the file input */
+            .hidden {
+              display: none;
+            }
+            
+
+          </style>
+
+          
+         
+            
+
+
+
+        
+            <p>
+              <button
+                id="fetch-and-broadcast"
+                onclick="fetchAndBroadcast(); return false;">
+                Backup & Broadcast
+              </button>
+              <button
+                id="just-broadcast"
+                onclick="justBroadcast(fileName); return false;" 
+                style="display: none">
+                Broadcast from File
+              </button>
+              <button
+                id="get-from-extension"
+                onclick="getFromExtension(); return false;"
+                style="display: none">
+                Get from extension
+              </button>
+            </p>
+          </div>
+        </form>
+      </div>
+      <div class="box">
+        <div class="box-content">
+          <p id="fetching-status"></p>
+          <p style="padding-top: 2px">
+            <progress
+              type="range"
+              id="fetching-progress"
+              name="fetching-progress"
+              min="0"
+              max="180"
+              value="0"
+              style="visibility: hidden" />
+          </p>
+        </div>
+        <div class="box-content" id="checking-relays-header-box">
+          <p id="checking-relays-header"></p>
+        </div>
+        <div class="box-content" id="checking-relays-box">
+          <p id="checking-relays"></p>
+        </div>
+        <div class="box-content">
+          <p id="file-download"></p>
+          <p id="events-found"></p>
+        </div>
+        <div class="box-content">
+          <p id="broadcasting-status"></p>
+          <p style="padding-top: 2px">
+            <progress
+              type="range"
+              id="broadcasting-progress"
+              name="broadcasting-progress"
+              min="0"
+              max="180"
+              value="0"
+              style="visibility: hidden" />
+          </p>
+        </div>
+      </div>
+      
+      
+
+     
+    </main>
+
+
+
+
+    <script src="https://bundle.run/buffer@6.0.3"></script>
+    <script src="https://bundle.run/bech32@2.0.0"></script>
+    <script src="https://nostr-utils.pages.dev/js/jquery-3.6.2.min.js"></script>
+    <script src="/js/nostr-utils.js"></script>
+    <script src="/js/relays.js"></script>
+    <script src="/js/nostr-broadcast.js"></script>
+  </body>
+</html>

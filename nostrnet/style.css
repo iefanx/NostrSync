@@ -3,7 +3,7 @@
 :root {
   --color-primary: #007bff;
   --color-secondary: #ccc;
-  --color-background: #202124;
+  --color-background: #212121;
   --color-text: #fff;
 }
 
@@ -27,6 +27,7 @@ body {
 .logo{
   width: 40px;
   padding: 2px;
+  
 }
 
 .header {
@@ -41,9 +42,18 @@ body {
 }
 
 h1 {
-  font-size: 1.2rem;
-  font-weight: 700;
+
   line-height: 1.5;
+  /* Apply the linear gradient to the text content of the logo */
+    background: linear-gradient(90deg, #7f7dd1, #548dd9 100%, #548dd9 0);
+    -webkit-background-clip: text;
+    color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 25px;
+    font-weight: 600;
+    margin-top: 0%;
+    margin-bottom: 0%;
 }
 
 h2 {
@@ -78,14 +88,15 @@ a {
 
 button {
   padding: 8px 8px;
-  background-color: #0c53e2;
+  background: linear-gradient(90deg, #7f7dd1, #548dd9 100%, #548dd9 0);
   color: #f0ecec;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   margin-bottom: 5px;
   font-weight: bold;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
 }
 
 button:hover {
@@ -97,16 +108,18 @@ button:hover {
 .dataBase a {
   display: inline-block;
   padding: 5px 5px;
-  background-color: #434547;
+  background-color: #000000;
   color: #f0ecec;
   text-decoration: none;
   border: none;
-  font-size: x-small;
+  font-size: small;
   font-weight: 600;
   border-radius: 25px;
   margin-left: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
 }
 
 .dataBase a:hover {
@@ -121,26 +134,29 @@ footer {
 }
 
 .box {
-  background-color: #35373a;
-  padding: 20px;
+  background-color: #000000;
+  padding: 10px;
   border-radius: 10px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
 }
 
 
-.progress-bar {
+#fetching-progress {
   height: 10px;
-  background-color: #555;
-  border-radius: 10px;
+
+  border-radius: 5px;
   overflow: hidden;
+  color: #000;
+
 }
 
-.progress-bar::-webkit-progress-bar {
+#fetching-progress::-webkit-progress-bar {
   background-color: #555;
   border-radius: 10px;
 }
 
-.progress-bar::-webkit-progress-value {
+#fetching-progress::-webkit-progress-value {
   background-color: var(--color-primary);
   border-radius: 10px;
   animation: loading 2s ease-out infinite;
@@ -149,7 +165,7 @@ footer {
 .space-between {
   display: flex;
   justify-content: center;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 
 .space-between-small {
@@ -168,8 +184,10 @@ footer {
   margin: 0 auto;
   display: block;
   color: var(--color-text);
-  background-color: #35373a;
+  background-color: #000000;
   width: 290px;
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
 }
 
 
@@ -230,6 +248,7 @@ input[type="file"]::-webkit-file-upload-button {
   cursor: pointer;
   margin: 4px;
   font-weight: 600;
+  
 }
 
 input[type="file"]::-webkit-file-upload-button:hover {
@@ -261,16 +280,18 @@ input[type="file"]::-webkit-file-upload-button:hover {
 .toggle-button label {
   display: inline-block;
     padding: 5px 5px;
-    background-color: #434547;
+    background-color: #010101;
     /* Button background color */
     color: #f0ecec;
     text-decoration: none;
     border: none;
-    font-size: x-small;
+    font-size: small;
     font-weight: 600;
     border-radius: 25px;
     cursor: pointer;
     transition: background-color 0.3s;
+    box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+    animation: slideUp 0.5s ease-in-out forwards;
 }
 
 /* Style the slider knob */
@@ -287,6 +308,53 @@ input[type="file"]::-webkit-file-upload-button:hover {
 
 
 
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translatex(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translatex(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 
 
 footer p {
