@@ -38,8 +38,6 @@ const hexa2npub = (hex) => {
 const parsePubkey = (pubkey) =>
   pubkey.match("npub1") ? npub2hexa(pubkey) : pubkey;
 
-  
-  
 // Function to open the IndexedDB database
 async function openDatabase() {
   const dbPromise = idb.openDB("NostrDB", 2, {
@@ -53,20 +51,14 @@ async function openDatabase() {
   return dbPromise;
 }
 
-async function storeFileChunks(db, fileObject) {
-  const CHUNK_SIZE = 1024 * 1024; // 1 MB chunks
-  const content = fileObject.content;
-
-  for (let offset = 0; offset < content.size; offset += CHUNK_SIZE) {
-    const chunk = content.slice(offset, offset + CHUNK_SIZE);
-
-    // Create a transaction for each chunk
-    const tx = db.transaction("Backups", "readwrite");
-    const store = tx.objectStore("Backups");
-    await store.put({ ...fileObject, content: chunk });
-    await tx.done;
-  }
+// Function to store a file in IndexedDB
+async function storeFile(db, fileObject) {
+  const tx = db.transaction("Backups", "readwrite");
+  const store = tx.objectStore("Backups");
+  await store.put(fileObject);
+  await tx.done;
 }
+
 // Function to generate a unique file name
 function generateUniqueFileName(originalFileName) {
   const date = new Date();
@@ -84,13 +76,18 @@ const downloadFileCopy = (data, fileName) => {
   tempLink.click();
 };
 
-
 async function downloadFile(data, originalFileName) {
   try {
+    // Step 1: Generate a unique file name
     const uniqueFileName = generateUniqueFileName(originalFileName);
+
+    // Step 2: Create a formatted JavaScript string
     const prettyJs = "const data = " + JSON.stringify(data, null, 2);
+
+    // Step 3: Create a Blob from the formatted JavaScript string
     const taBlob = new Blob([prettyJs], { type: "text/javascript" });
 
+    // Step 4: Optionally, store the file in IndexedDB (if needed)
     const fileObject = {
       name: uniqueFileName,
       content: taBlob,
@@ -99,17 +96,16 @@ async function downloadFile(data, originalFileName) {
       time: new Date().toLocaleTimeString(),
     };
 
+    // Step 5: Optionally, open a connection to the IndexedDB database
     const db = await openDatabase();
 
-    // Store file in chunks
-    await storeFileChunks(db, fileObject);
+    // Step 6: Optionally, store the file object in IndexedDB
+    await storeFile(db, fileObject);
   } catch (error) {
     console.error("Error while downloading and storing the file:", error);
     // Handle the error, possibly by showing a user-friendly message
   }
 }
-
-
 
 const updateRelayStatus = (relay, status, addToCount, relayStatusAndCount) => {
   if (relayStatusAndCount[relay] == undefined) {
@@ -145,7 +141,6 @@ const displayRelayStatus = (relayStatusAndCount) => {
     $("#checking-relays").html("");
   }
 };
-
 
 // fetch events from relay, returns a promise
 const fetchFromRelay = async (relay, filters, pubkey, events, relayStatus) =>
@@ -252,89 +247,80 @@ const getEvents = async (filters, pubkey) => {
   return Object.keys(events).map((id) => events[id]);
 };
 
-const sendToRelay = async (relay, data, relayStatus) => {
-  const openWebSocket = () =>
-    new Promise((resolve, reject) => {
+// send events to a relay, returns a promisse
+const sendToRelay = async (relay, data, relayStatus) =>
+  new Promise((resolve, reject) => {
+    try {
       const ws = new WebSocket(relay);
-      const timeout = setTimeout(() => {
+
+      updateRelayStatus(relay, "Starting", 0, relayStatus);
+
+      // prevent hanging forever
+      let myTimeout = setTimeout(() => {
         ws.close();
         reject("timeout");
       }, 10_000);
 
+      // fetch events from relay
       ws.onopen = () => {
-        clearTimeout(timeout);
-        resolve(ws);
+        updateRelayStatus(relay, "Sending", 0, relayStatus);
+        for (evnt of data) {
+          clearTimeout(myTimeout);
+          myTimeout = setTimeout(() => {
+            ws.close();
+            reject("timeout");
+          }, 10_000);
+
+          ws.send(JSON.stringify(["EVENT", evnt]));
+        }
       };
-
-      ws.onerror = (err) => {
-        clearTimeout(timeout);
-        reject(err);
-      };
-
-      ws.onclose = () => {
-        clearTimeout(timeout);
-        reject("WebSocket closed unexpectedly");
-      };
-    });
-
-  const sendEvent = (ws, evnt) =>
-    new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        ws.close();
-        reject("timeout");
-      }, 10_000);
-
-      ws.send(JSON.stringify(["EVENT", evnt]));
-
+      // Listen for messages
       ws.onmessage = (event) => {
-        clearTimeout(timeout);
+        clearTimeout(myTimeout);
+        myTimeout = setTimeout(() => {
+          ws.close();
+          reject("timeout");
+        }, 10_000);
+
         const [msgType, subscriptionId, inserted] = JSON.parse(event.data);
+        // event messages
+        // end of subscription messages
         if (msgType === "OK") {
           if (inserted == true) {
             updateRelayStatus(relay, undefined, 1, relayStatus);
-            resolve();
           } else {
             console.log(event.data);
-            reject("Failed to insert event");
           }
         }
       };
-
       ws.onerror = (err) => {
-        clearTimeout(timeout);
+        updateRelayStatus(relay, "Error", 0, relayStatus);
+        console.log("Error", err);
+        ws.close();
         reject(err);
       };
-
-      ws.onclose = () => {
-        clearTimeout(timeout);
-        reject("WebSocket closed unexpectedly");
+      ws.onclose = (socket, event) => {
+        updateRelayStatus(relay, "Done", 0, relayStatus);
+        resolve();
       };
-    });
-
-  try {
-    const ws = await openWebSocket();
-    updateRelayStatus(relay, "Starting", 0, relayStatus);
-
-    for (const evnt of data) {
-      updateRelayStatus(relay, "Sending", 0, relayStatus);
-      await sendEvent(ws, evnt);
+    } catch (exception) {
+      console.log(exception);
+      updateRelayStatus(relay, "Error", 0, relayStatus);
+      try {
+        ws.close();
+      } catch (exception) {}
+      reject(exception);
     }
+  });
 
-    updateRelayStatus(relay, "Done", 0, relayStatus);
-    ws.close();
-  } catch (error) {
-    console.error(`Error in sendToRelay for relay ${relay}:`, error);
-    updateRelayStatus(relay, "Error", 0, relayStatus);
-  }
-};
-
+// broadcast events to list of relays
 const broadcastEvents = async (data) => {
+  // batch processing of 10 relays
+  let broadcastFunctions = [...relays];
   let relayStatus = {};
-  const batchSize = 10;
-
-  while (relays.length > 0) {
-    const relaysForThisRound = relays.splice(0, batchSize);
-    $("#broadcasting-progress").val(relays.length);
+  while (broadcastFunctions.length) {
+    let relaysForThisRound = broadcastFunctions.splice(0, 10);
+    $("#broadcasting-progress").val(relays.length - broadcastFunctions.length);
     await Promise.allSettled(
       relaysForThisRound.map((relay) => sendToRelay(relay, data, relayStatus))
     );
