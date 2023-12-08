@@ -283,7 +283,7 @@ input[type="file"]::-webkit-file-upload-button:hover {
 .toggle-button label {
   display: inline-block;
     padding: 5px 5px;
-    background-color: #010101;
+    background-color: #131314;
     /* Button background color */
     color: #f0ecec;
     text-decoration: none;

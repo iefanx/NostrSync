@@ -275,7 +275,7 @@ input[type="file"]::-webkit-file-upload-button:hover {
 
 /* Style the slider knob */
 .toggle-button input[type="checkbox"]+label::before {
-
+  
   display: none;
   
 }
