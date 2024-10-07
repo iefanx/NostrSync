@@ -64,7 +64,10 @@ const fetchAndBroadcast = async () => {
   downloadFile(data, 'nostr-backup.js')
 
    $("#file-download").html(txt.download);
-   downloadFileCopy(data, "nostr-backup.js");
+   const useJsonl = document.getElementById("jsonlToogle").checked;
+   const fileName = useJsonl ? "nostr-backup.jsonl" : "nostr-backup.js"
+
+   downloadFileCopy(data, fileName, useJsonl);
   
   
   // inform user that app is broadcasting events to relays
@@ -77,7 +80,10 @@ const fetchAndBroadcast = async () => {
   $('#checking-relays-box').css('display', 'flex')
   $('#checking-relays-header').text("Broadcasting to Relays:")
 
-  await broadcastEvents(data)
+  const shouldBroadcast = document.getElementById("broadcastToogle").checked;
+  if (shouldBroadcast) {
+    await broadcastEvents(data)
+  }
 
   // inform user that broadcasting is done
   $('#broadcasting-status').html(txt.broadcasting + checkMark)
@@ -108,7 +114,13 @@ if (window.nostr) {
 const justBroadcast = async (fileName) => {
   const reader = new FileReader();
   reader.addEventListener('load', (event) => {
-    var data = JSON.parse(event.target.result.substring(13))
+    let data = ""
+    const lines = event.target.result.split('\n');
+    if (fileName.name.endsWith('.jsonl')) {
+      data = lines.filter(line => line.trim() !== '').map(line => JSON.parse(line));
+    } else {
+      data = JSON.parse(event.target.result.substring(13))
+    }
     broadcast(data)
   });
   reader.readAsText(fileName)
