@@ -32,8 +32,3 @@ updateRelays();
 document.getElementById("relayToggle").addEventListener("change", updateRelays);
 
 
-function displayRelays() {
-    // Example of how to display relays (adapt to your actual UI)
-    
-    });
-}
