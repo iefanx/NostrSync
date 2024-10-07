@@ -1,7 +1,7 @@
 // service-worker.js
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open("nostryfied-cache").then((cache) => {
+    caches.open("nostrsync-cache").then((cache) => {
       return cache.addAll([
         "/",
         "/index.html",
