@@ -1,16 +1,26 @@
 {
+  "id": "/",
   "name": "NostrSync",
   "short_name": "NostrSync",
   "description": "Fetch, backup and broadcast your Nostr events",
-  "start_url": "/",
+  "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "window-controls-overlay"],
   "background_color": "#202124",
   "theme_color": "#202124",
   "icons": [
     {
-      "src": "icon.png", 
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

@@ -122,6 +122,30 @@ button:hover {
   animation: slideUp 0.5s ease-in-out forwards;
 }
 
+.install-app-button {
+  display: inline-block;
+  padding: 5px 10px;
+  background-color: #131314;
+  color: #f0ecec;
+  border: none;
+  font-size: small;
+  font-weight: 600;
+  border-radius: 25px;
+  margin-left: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
+}
+
+.install-app-button:hover {
+  background-color: #0056b3;
+}
+
+.install-app-button[hidden] {
+  display: none !important;
+}
+
 .dataBase a:hover {
   background-color: #0056b3;
   /* Button background color on hover */

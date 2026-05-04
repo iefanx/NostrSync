@@ -16,10 +16,14 @@
     
     <!-- CSS -->
     <link rel="stylesheet" href="/nostrnet/style.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <!-- Lightning -->
     <meta name="lightning" content="realiefan@ln.tips" />
     <!-- PWA -->
     <meta name="theme-color" content="#202124" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
     
     <meta charset="UTF-8" />
@@ -50,6 +54,7 @@
       <div id="toggleCustomRelays" class="toggle-button" onclick="toggleCustomRelays()"> <label> Custom Relays</label></div>
       <a href="/nostrnet/database.html" class="db-btn">LocalDatabase</a>
       <div id="toggleFileInput" class="toggle-button" onclick="toggleFileInput()"> <label> Restore</label></div>
+      <button id="install-app" class="install-app-button" type="button" hidden>Install App</button>
       
       </div>
       
@@ -195,5 +200,6 @@
     <script src="/js/nostr-utils.js"></script>
     <script src="/js/relays.js"></script>
     <script src="/js/nostr-broadcast.js"></script>
+    <script src="/js/pwa.js"></script>
   </body>
 </html>
