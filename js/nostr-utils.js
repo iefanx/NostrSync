@@ -225,22 +225,40 @@ const fetchFromRelay = async (relay, filters, pubkey, events, relayStatus) =>
   });
 
 // query relays for events published by this pubkey
-const getEvents = async (filters, pubkey) => {
-  // events hash
+const getEvents = async (filters, pubkey, customPool) => {
   const events = {};
+  const pool = customPool || relays;
+  const relayStatus = {};
+  const poolSize = 30; // Maintain 30 active connections
+  let processedCount = 0;
 
-  // batch processing of 10 relays
-  let fetchFunctions = [...relays];
-  while (fetchFunctions.length) {
-    let relaysForThisRound = fetchFunctions.splice(0, 10);
-    let relayStatus = {};
-    $("#fetching-progress").val(relays.length - fetchFunctions.length);
-    await Promise.allSettled(
-      relaysForThisRound.map((relay) =>
-        fetchFromRelay(relay, filters, pubkey, events, relayStatus)
-      )
-    );
+  console.log(`Starting dynamic fetch pool for ${pool.length} relays...`);
+  
+  const queue = [...pool];
+  const workers = [];
+
+  const next = async () => {
+    if (queue.length === 0) return;
+    const relay = queue.shift();
+    try {
+      await fetchFromRelay(relay, filters, pubkey, events, relayStatus);
+    } catch (e) {
+      console.warn(`Fetch failed for ${relay}`, e);
+    } finally {
+      processedCount++;
+      $("#fetching-progress").val(processedCount);
+      // Immediately start the next relay in the queue
+      await next();
+    }
+  };
+
+  $("#fetching-progress").prop('max', pool.length);
+  // Initialize the pool
+  for (let i = 0; i < Math.min(poolSize, pool.length); i++) {
+    workers.push(next());
   }
+
+  await Promise.all(workers);
   displayRelayStatus({});
 
   // return data as an array of events
@@ -315,16 +333,36 @@ const sendToRelay = async (relay, data, relayStatus) =>
 
 // broadcast events to list of relays
 const broadcastEvents = async (data) => {
-  // batch processing of 10 relays
-  let broadcastFunctions = [...relays];
-  let relayStatus = {};
-  while (broadcastFunctions.length) {
-    let relaysForThisRound = broadcastFunctions.splice(0, 10);
-    $("#broadcasting-progress").val(relays.length - broadcastFunctions.length);
-    await Promise.allSettled(
-      relaysForThisRound.map((relay) => sendToRelay(relay, data, relayStatus))
-    );
+  const poolSize = 30; // Maintain 30 active connections
+  const relayStatus = {};
+  let processedCount = 0;
+
+  console.log(`Starting dynamic broadcast pool for ${relays.length} relays...`);
+
+  const queue = [...relays];
+  const workers = [];
+
+  const next = async () => {
+    if (queue.length === 0) return;
+    const relay = queue.shift();
+    try {
+      await sendToRelay(relay, data, relayStatus);
+    } catch (e) {
+      console.warn(`Broadcast failed for ${relay}`, e);
+    } finally {
+      processedCount++;
+      $("#broadcasting-progress").val(processedCount);
+      // Immediately start the next relay in the queue
+      await next();
+    }
+  };
+
+  $("#broadcasting-progress").prop('max', relays.length);
+  // Initialize the pool
+  for (let i = 0; i < Math.min(poolSize, relays.length); i++) {
+    workers.push(next());
   }
 
+  await Promise.all(workers);
   displayRelayStatus(relayStatus);
 };
