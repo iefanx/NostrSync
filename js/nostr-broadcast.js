@@ -214,8 +214,8 @@ const fetchAndBroadcast = async () => {
       }
     }
 
-    // Phase 2: Initial Fetch (prioritize personal + bootstrap trusted)
-  const bootstrapPool = Array.from(new Set([...personalRelays, ...relays.slice(0, 50)]));
+    // Phase 2: Fetch from the full trusted pool plus any relays from the extension.
+    const bootstrapPool = Array.from(new Set([...personalRelays, ...relays]));
     const filters = [{ authors: [pubkey] }, { "#p": [pubkey] }] 
 
   // inform user
