@@ -67,10 +67,24 @@ function generateUniqueFileName(originalFileName) {
   return uniqueFileName;
 }
 
+const serializeBackupData = (data, fileName) => {
+  if (fileName.toLowerCase().endsWith('.jsonl')) {
+    return {
+      content: data.map((event) => JSON.stringify(event)).join("\n") + "\n",
+      type: "application/x-ndjson",
+    };
+  }
+
+  return {
+    content: JSON.stringify(data, null, 2),
+    type: "application/json",
+  };
+}
+
 const downloadFileCopy = (data, fileName) => {
-  const prettyJs = "const data = " + JSON.stringify(data, null, 2);
+  const serializedBackup = serializeBackupData(data, fileName);
   const tempLink = document.createElement("a");
-  const taBlob = new Blob([prettyJs], { type: "text/javascript" });
+  const taBlob = new Blob([serializedBackup.content], { type: serializedBackup.type });
   tempLink.setAttribute("href", URL.createObjectURL(taBlob));
   tempLink.setAttribute("download", fileName);
   tempLink.click();
@@ -81,11 +95,11 @@ async function downloadFile(data, originalFileName) {
     // Step 1: Generate a unique file name
     const uniqueFileName = generateUniqueFileName(originalFileName);
 
-    // Step 2: Create a formatted JavaScript string
-    const prettyJs = "const data = " + JSON.stringify(data, null, 2);
+    // Step 2: Serialize the backup in the requested export format.
+    const serializedBackup = serializeBackupData(data, originalFileName);
 
-    // Step 3: Create a Blob from the formatted JavaScript string
-    const taBlob = new Blob([prettyJs], { type: "text/javascript" });
+    // Step 3: Create a Blob from the serialized backup.
+    const taBlob = new Blob([serializedBackup.content], { type: serializedBackup.type });
 
     // Step 4: Optionally, store the file in IndexedDB (if needed)
     const fileObject = {

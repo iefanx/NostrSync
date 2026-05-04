@@ -56,6 +56,96 @@ const pubkeyOnChange = () => {
   updateButtonText();
 }
 
+const parseBackupFileContent = (content, fileName = "") => {
+  const trimmedContent = content.trim();
+  const normalizedFileName = fileName.toLowerCase();
+
+  if (!trimmedContent) {
+    throw new Error("Backup file is empty.");
+  }
+
+  if (normalizedFileName.endsWith(".jsonl")) {
+    return trimmedContent
+      .split(/\r?\n/)
+      .filter((line) => line.trim() !== "")
+      .map((line) => JSON.parse(line));
+  }
+
+  if (trimmedContent.startsWith("const data =")) {
+    return JSON.parse(trimmedContent.slice("const data =".length).trim());
+  }
+
+  return JSON.parse(trimmedContent);
+}
+
+const getRelayUrlsFromKind10002 = (data) => {
+  const relayUrls = data
+    .filter((event) => event.kind === 10002 && Array.isArray(event.tags))
+    .flatMap((event) =>
+      event.tags
+        .filter((tag) => tag[0] === 'r' && tag[1])
+        .filter((tag) => tag.length < 3 || tag[2] === 'write')
+        .map((tag) => tag[1])
+    );
+
+  return Array.from(new Set(relayUrls));
+}
+
+const getRelayUrlsFromKind3 = (data) => {
+  const kind3Event = data.find((event) => event.kind === 3 && event.content);
+
+  if (!kind3Event) {
+    return [];
+  }
+
+  try {
+    const relayMap = JSON.parse(kind3Event.content);
+
+    return Object.keys(relayMap).filter((url) => {
+      const relayConfig = relayMap[url];
+
+      if (relayConfig == null || typeof relayConfig !== 'object') {
+        return true;
+      }
+
+      return relayConfig.write !== false;
+    });
+  } catch (error) {
+    console.error("Error parsing JSON from file kind-3:", error);
+    return [];
+  }
+}
+
+const resolveRestoreRelayPool = async (data) => {
+  const fileRelays = Array.from(new Set([
+    ...getRelayUrlsFromKind10002(data),
+    ...getRelayUrlsFromKind3(data),
+  ]));
+
+  const existingRelays = [...relays];
+
+  if (existingRelays.length === 0) {
+    await updateRelays();
+  }
+
+  return Array.from(new Set([...fileRelays, ...relays]));
+}
+
+const resetProgressBar = (selector) => {
+  $(selector).css('visibility', 'hidden');
+  $(selector).prop('max', 1);
+  $(selector).val(0);
+}
+
+const showProgressBar = (selector, max, value = 0) => {
+  const normalizedMax = Math.max(1, max);
+  const normalizedValue = Math.min(value, normalizedMax);
+
+  $(selector).css('visibility', 'visible');
+  $(selector).prop('max', normalizedMax);
+  $(selector).val(normalizedValue);
+}
+
 // button click handler
 const fetchAndBroadcast = async () => {
   let pubkey = parsePubkey($('#pubkey').val().trim())
@@ -89,13 +179,11 @@ const fetchAndBroadcast = async () => {
 
   // reset UI
   $('#fetching-status').html('')
-  $('#fetching-progress').css('visibility', 'hidden')
-  $('#fetching-progress').val(0)
+  resetProgressBar('#fetching-progress')
   $('#file-download').html('')
   $('#events-found').text('')
   $('#broadcasting-status').html('')
-  $('#broadcasting-progress').css('visibility', 'hidden')
-  $('#broadcasting-progress').val(0)
+  resetProgressBar('#broadcasting-progress')
   
   const checkMark = '&#10003;'
   const txt = {
@@ -109,11 +197,6 @@ const fetchAndBroadcast = async () => {
   // disable button
   $('#fetch-and-broadcast').prop('disabled', true)
   $('#just-broadcast').prop('disabled', true)
-  
-  // inform user
-  $('#fetching-status').text(txt.fetching)
-  $('#fetching-progress').css('visibility', 'visible')
-  $('#fetching-progress').prop('max', relays.length)
 
   $('#checking-relays-header-box').css('display', 'flex')
   $('#checking-relays-box').css('display', 'flex')
@@ -132,8 +215,12 @@ const fetchAndBroadcast = async () => {
     }
 
     // Phase 2: Initial Fetch (prioritize personal + bootstrap trusted)
-    const bootstrapPool = Array.from(new Set([...personalRelays, ...relays.slice(0, 50)]));
+  const bootstrapPool = Array.from(new Set([...personalRelays, ...relays.slice(0, 50)]));
     const filters = [{ authors: [pubkey] }, { "#p": [pubkey] }] 
+
+  // inform user
+  $('#fetching-status').text(txt.fetching)
+  showProgressBar('#fetching-progress', bootstrapPool.length)
     
     // Temporarily use bootstrapPool to find NIP-65
     console.log(`Fetching events using ${bootstrapPool.length} bootstrap relays...`);
@@ -141,7 +228,7 @@ const fetchAndBroadcast = async () => {
 
     // inform user fetching is done
     $('#fetching-status').html(txt.fetching + checkMark)
-    $('#fetching-progress').val(relays.length)
+    showProgressBar('#fetching-progress', bootstrapPool.length, bootstrapPool.length)
 
     // Discover more User's Relays (NIP-65 priority, fallback to NIP-02/kind 3)
     let discoveredRelays = [...personalRelays];
@@ -190,12 +277,11 @@ const fetchAndBroadcast = async () => {
     $('#checking-relays-box').css('display', 'none')
     
     $('#file-download').html(txt.download)
-    downloadFile(data, 'nostr-backup.js')
-    downloadFileCopy(data, "nostr-backup.js");
+    downloadFile(data, 'nostr-backup.jsonl')
+    downloadFileCopy(data, "nostr-backup.jsonl");
     
     $('#broadcasting-status').html(txt.broadcasting)
-    $('#broadcasting-progress').css('visibility', 'visible')
-    $('#broadcasting-progress').prop('max', relays.length)
+    showProgressBar('#broadcasting-progress', relays.length)
     
     $('#checking-relays-header-box').css('display', 'flex')
     $('#checking-relays-box').css('display', 'flex')
@@ -204,12 +290,13 @@ const fetchAndBroadcast = async () => {
     await broadcastEvents(data)
 
     $('#broadcasting-status').html(txt.broadcasting + checkMark)
-    $('#broadcasting-progress').val(relays.length)
+    showProgressBar('#broadcasting-progress', relays.length, relays.length)
   } catch (err) {
     console.error("Process failed:", err);
     alert("An error occurred during the sync process. Check console for details.");
   } finally {
     $('#fetch-and-broadcast').prop('disabled', false)
+    $('#just-broadcast').prop('disabled', false)
   }
 }
 
@@ -223,10 +310,20 @@ $(document).ready(() => {
 
 // button click handler
 const justBroadcast = async (fileName) => {
+  if (!fileName) {
+    alert("Choose a backup file first.");
+    return;
+  }
+
   const reader = new FileReader();
   reader.addEventListener('load', (event) => {
-    var data = JSON.parse(event.target.result.substring(13))
-    broadcast(data)
+    try {
+      const data = parseBackupFileContent(event.target.result, fileName.name || "");
+      broadcast(data);
+    } catch (error) {
+      console.error("Error parsing backup file:", error);
+      alert("Invalid backup file. Upload a NostrSync backup JSON file and try again.");
+    }
   });
   reader.readAsText(fileName)
 }
@@ -235,13 +332,11 @@ const broadcast = async (data) => {
   console.log(data)
   // reset UI
   $('#fetching-status').html('')
-  $('#fetching-progress').css('visibility', 'hidden')
-  $('#fetching-progress').val(0)
+  resetProgressBar('#fetching-progress')
   $('#file-download').html('')
   $('#events-found').text('')
   $('#broadcasting-status').html('')
-  $('#broadcasting-progress').css('visibility', 'hidden')
-  $('#broadcasting-progress').val(0)
+  resetProgressBar('#broadcasting-progress')
   // messages to show to user
   const checkMark = '&#10003;'
   const txt = {
@@ -253,21 +348,20 @@ const broadcast = async (data) => {
   $('#fetch-and-broadcast').prop('disabled', true)
   $('#just-broadcast').prop('disabled', true)
   // show and update fetching progress bar
-  $('#fetching-progress').css('visibility', 'visible')
-  $('#fetching-progress').prop('max', relays.length)
+  showProgressBar('#fetching-progress', 1)
 
   // inform user fetching is done
   $('#fetching-status').html(txt.fetching + checkMark)
-  $('#fetching-progress').val(relays.length)
+  showProgressBar('#fetching-progress', 1, 1)
 
-  const latestKind3 = data.filter((it) => it.kind == 3)[0]
-  if (latestKind3 && latestKind3.content) {
-    try {
-      const myRelaySet = JSON.parse(latestKind3.content)
-      relays = Object.keys(myRelaySet).filter(url => myRelaySet[url].write).map(url => url)
-    } catch (e) {
-      console.error("Error parsing JSON from file kind-3:", e);
-    }
+  relays = await resolveRestoreRelayPool(data)
+
+  if (relays.length === 0) {
+    $('#broadcasting-status').html('No relays available for broadcast.')
+    $('#fetch-and-broadcast').prop('disabled', false)
+    $('#just-broadcast').prop('disabled', false)
+    alert("No relays were found in the backup or trusted relay pool.");
+    return;
   }
 
   $('#checking-relays-header-box').css('display', 'none')
@@ -276,8 +370,7 @@ const broadcast = async (data) => {
   // inform user that app is broadcasting events to relays
   $('#broadcasting-status').html(txt.broadcasting)
   // show and update broadcasting progress bar
-  $('#broadcasting-progress').css('visibility', 'visible')
-  $('#broadcasting-progress').prop('max', relays.length)
+  showProgressBar('#broadcasting-progress', relays.length)
   
   $('#checking-relays-header-box').css('display', 'flex')
   $('#checking-relays-box').css('display', 'flex')
@@ -287,7 +380,8 @@ const broadcast = async (data) => {
 
   // inform user that broadcasting is done
   $('#broadcasting-status').html(txt.broadcasting + checkMark)
-  $('#broadcasting-progress').val(relays.length)
+  showProgressBar('#broadcasting-progress', relays.length, relays.length)
   // re-enable broadcast button
   $('#fetch-and-broadcast').prop('disabled', false)
+  $('#just-broadcast').prop('disabled', false)
 }

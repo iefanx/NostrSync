@@ -101,8 +101,10 @@ const downloadFile = async (fileName) => {
       const fileData = event.target.result;
 
       if (fileData) {
-        // Create a blob URL for the file
-        const blob = new Blob([fileData.content], { type: "text/javascript" });
+        // Reuse the stored JSON blob so restore uploads the same file shape.
+        const blob = fileData.content instanceof Blob
+          ? fileData.content
+          : new Blob([fileData.content], { type: "application/json" });
         const url = window.URL.createObjectURL(blob);
 
         // Create an anchor element for downloading
