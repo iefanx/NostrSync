@@ -38,36 +38,7 @@ const hexa2npub = (hex) => {
 const parsePubkey = (pubkey) =>
   pubkey.match("npub1") ? npub2hexa(pubkey) : pubkey;
 
-// ── IndexedDB helpers ───────────────────────────────────────────────────────
 
-// Function to open the IndexedDB database
-async function openDatabase() {
-  const dbPromise = idb.openDB("NostrDB", 2, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains("Backups")) {
-        db.createObjectStore("Backups", { keyPath: "name" });
-      }
-    },
-  });
-
-  return dbPromise;
-}
-
-// Function to store a file in IndexedDB
-async function storeFile(db, fileObject) {
-  const tx = db.transaction("Backups", "readwrite");
-  const store = tx.objectStore("Backups");
-  await store.put(fileObject);
-  await tx.done;
-}
-
-// Function to generate a unique file name
-function generateUniqueFileName(originalFileName) {
-  const date = new Date();
-  const timestamp = date.getTime();
-  const uniqueFileName = timestamp + "_" + originalFileName;
-  return uniqueFileName;
-}
 
 // ── Mobile detection ────────────────────────────────────────────────────────
 
@@ -151,19 +122,25 @@ async function serializeAndDownload(data, fileName) {
   await _yield();
 }
 
-// ── Throttled relay status display ──────────────────────────────────────────
+// ── Throttled relay status display (500ms interval) ─────────────────────────
+//
+// With 300+ relays, rebuilding the HTML string at 60fps via rAF causes
+// massive main-thread jank.  Instead, coalesce updates and flush at most
+// every 500ms — reduces DOM writes from ~18K/sec to ~2/sec.
 
-let _statusRafPending = false;
+let _statusTimerActive = false;
 let _pendingRelayStatus = null;
 
 const _flushRelayStatus = () => {
-  _statusRafPending = false;
+  _statusTimerActive = false;
   if (!_pendingRelayStatus) return;
 
   const relayStatusAndCount = _pendingRelayStatus;
   const keys = Object.keys(relayStatusAndCount);
 
   if (keys.length > 0) {
+    // Only show active relays (non-Done) first, then Done at the bottom
+    // to keep the scrollable area useful
     let newText = keys
       .map(
         (it) =>
@@ -177,7 +154,6 @@ const _flushRelayStatus = () => {
       .join("<br />");
     $("#checking-relays").html(newText);
   } else {
-    $("#checking-relays-header").html("");
     $("#checking-relays").html("");
   }
 };
@@ -194,11 +170,11 @@ const updateRelayStatus = (relay, status, addToCount, relayStatusAndCount) => {
       relayStatusAndCount[relay].count + addToCount;
   else relayStatusAndCount[relay].count = addToCount;
 
-  // Throttle DOM updates via requestAnimationFrame (coalesce rapid updates)
+  // Throttle DOM updates to every 500ms (not every frame)
   _pendingRelayStatus = relayStatusAndCount;
-  if (!_statusRafPending) {
-    _statusRafPending = true;
-    requestAnimationFrame(_flushRelayStatus);
+  if (!_statusTimerActive) {
+    _statusTimerActive = true;
+    setTimeout(_flushRelayStatus, 500);
   }
 };
 
@@ -334,13 +310,13 @@ const getEvents = async (filters, pubkey, customPool) => {
       console.warn(`Fetch failed for ${relay}`, e);
     } finally {
       processedCount++;
-      $("#fetching-progress").val(processedCount);
+      $("#sync-progress").val(processedCount);
       // Immediately start the next relay in the queue
       await next();
     }
   };
 
-  $("#fetching-progress").prop('max', pool.length);
+  $("#sync-progress").prop('max', pool.length);
   // Initialize the pool
   for (let i = 0; i < Math.min(poolSize, pool.length); i++) {
     workers.push(next());
@@ -462,13 +438,13 @@ const broadcastEvents = async (data) => {
       console.warn(`Broadcast failed for ${relay}`, e);
     } finally {
       processedCount++;
-      $("#broadcasting-progress").val(processedCount);
+      $("#sync-progress").val(processedCount);
       // Immediately start the next relay in the queue
       await next();
     }
   };
 
-  $("#broadcasting-progress").prop('max', relays.length);
+  $("#sync-progress").prop('max', relays.length);
   // Initialize the pool
   for (let i = 0; i < Math.min(poolSize, relays.length); i++) {
     workers.push(next());

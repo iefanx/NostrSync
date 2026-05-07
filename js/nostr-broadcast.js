@@ -2,11 +2,29 @@ let isCustomMode = false;
 
 function toggleCustomRelays() {
   const box = $('#custom-relays-box');
+  const label = $('#label-custom-relays');
+  
   if (box.css('display') === 'none') {
     box.slideDown();
+    label.css({
+      'background': 'linear-gradient(90deg, #7f7dd1, #548dd9)',
+      'color': '#fff'
+    });
   } else {
     box.slideUp();
+    label.css({
+      'background': '',
+      'color': ''
+    });
   }
+}
+
+function toggleBroadcastOnly() {
+  const fileInput = document.getElementById('file-selector');
+  const label = $('#label-broadcast-only');
+
+  // Trigger file selection
+  fileInput.click();
 }
 
 async function syncCustomRelays() {
@@ -30,9 +48,9 @@ async function syncCustomRelays() {
   isCustomMode = true;
   console.log("Custom Sync Mode Started with relays:", relays);
   
-  // Highlight the Custom Relays button (target the label inside the toggle-button container)
-  $('#toggleCustomRelays label').css({
-    'background': 'linear-gradient(90deg, #7f7dd1, #548dd9 100%, #548dd9 0)',
+  // Highlight the Custom Relays button
+  $('#label-custom-relays').css({
+    'background': 'linear-gradient(90deg, #7f7dd1, #548dd9)',
     'color': '#fff',
     'border': 'none'
   });
@@ -45,10 +63,17 @@ async function syncCustomRelays() {
 const updateButtonText = () => {
   const pubkeyInput = $('#pubkey').val().trim();
   const btn = $('#fetch-and-broadcast');
+  
   if (pubkeyInput === "") {
     btn.text("Login with Extension");
   } else {
     btn.text("Backup & Broadcast");
+  }
+
+  // If a file is selected, ensure we stay in broadcast mode
+  if (window.fileName) {
+    $('#fetch-and-broadcast').hide();
+    $('#just-broadcast').show();
   }
 }
 
@@ -131,20 +156,37 @@ const resolveRestoreRelayPool = async (data) => {
   return Array.from(new Set([...fileRelays, ...relays]));
 }
 
-const resetProgressBar = (selector) => {
-  $(selector).css('visibility', 'hidden');
-  $(selector).prop('max', 1);
-  $(selector).val(0);
-}
+// ── UI helpers for the sync panel ───────────────────────────────────────────
 
-const showProgressBar = (selector, max, value = 0) => {
-  const normalizedMax = Math.max(1, max);
-  const normalizedValue = Math.min(value, normalizedMax);
+const setPhase = (id, state) => {
+  // state: 'idle' | 'active' | 'done'
+  const el = $(`#${id}`);
+  el.removeClass('active done');
+  if (state === 'active') el.addClass('active');
+  if (state === 'done')   el.addClass('done');
+};
 
-  $(selector).css('visibility', 'visible');
-  $(selector).prop('max', normalizedMax);
-  $(selector).val(normalizedValue);
-}
+const setProgress = (value, max) => {
+  const bar = $('#sync-progress');
+  bar.prop('max', Math.max(1, max));
+  bar.val(Math.min(value, max));
+};
+
+const showSyncPanel = () => {
+  // Reset everything
+  $('#sync-panel').show();
+  $('#fetching-status').text('');
+  $('#file-download').text('');
+  $('#broadcasting-status').text('');
+  $('#events-found').text('');
+  $('#checking-relays').html('');
+  $('#checking-relays-header').text('');
+  setProgress(0, 1);
+  setPhase('phase-fetch', 'idle');
+  setPhase('phase-download', 'idle');
+  setPhase('phase-broadcast', 'idle');
+  $('#relay-section').hide();
+};
 
 // ── Relay discovery (extracted for parallel execution) ───────────────────────
 
@@ -209,7 +251,6 @@ const fetchAndBroadcast = async () => {
         if (pubkey) {
           $('#pubkey').val(pubkey);
           updateButtonText();
-          // We don't auto-start here to give user a chance to see the key
           return;
         }
       } catch (e) {
@@ -224,33 +265,19 @@ const fetchAndBroadcast = async () => {
 
   // Phase 0: Load relays if not in custom mode
   if (!isCustomMode) {
-    $('#fetching-status').text("Updating relay list from API...")
+    $('#sync-panel').show();
+    $('#fetching-status').text("Updating relay list...");
+    setPhase('phase-fetch', 'active');
     await updateRelays();
   }
 
-  // reset UI
-  $('#fetching-status').html('')
-  resetProgressBar('#fetching-progress')
-  $('#file-download').html('')
-  $('#events-found').text('')
-  $('#broadcasting-status').html('')
-  resetProgressBar('#broadcasting-progress')
+  // Show panel and reset
+  showSyncPanel();
+  const checkMark = ' ✓';
   
-  const checkMark = '&#10003;'
-  const txt = {
-    broadcasting: 'Broadcasting to relays... ',
-    fetching: 'Fetching from relays... ',
-    download: `Downloading Backup file... ${checkMark}`,
-  }
-  
-  $('#checking-relays-header').text("Waiting for Relays: ")
-  
-  // disable button
+  // disable buttons
   $('#fetch-and-broadcast').prop('disabled', true)
   $('#just-broadcast').prop('disabled', true)
-
-  $('#checking-relays-header-box').css('display', 'flex')
-  $('#checking-relays-box').css('display', 'flex')
 
   try {
     // Phase 1: Pre-discovery via Extension
@@ -265,53 +292,53 @@ const fetchAndBroadcast = async () => {
       }
     }
 
-    // Phase 2: Fetch from the full trusted pool plus any relays from the extension.
+    // ── PHASE: FETCH ────────────────────────────────────────────────────────
     const bootstrapPool = Array.from(new Set([...personalRelays, ...relays]));
     const filters = [{ authors: [pubkey] }, { "#p": [pubkey] }] 
 
-    // inform user
-    $('#fetching-status').text(txt.fetching)
-    showProgressBar('#fetching-progress', bootstrapPool.length)
+    setPhase('phase-fetch', 'active');
+    $('#fetching-status').text('Fetching from relays...');
+    setProgress(0, bootstrapPool.length);
+
+    // Show relay activity
+    $('#relay-section').show();
+    $('#checking-relays-header').text('Relay Activity');
     
-    // Temporarily use bootstrapPool to find NIP-65
     console.log(`Fetching events using ${bootstrapPool.length} bootstrap relays...`);
     const data = (await getEvents(filters, pubkey, bootstrapPool)).sort((a, b) => b.created_at - a.created_at)
 
-    // inform user fetching is done
-    $('#fetching-status').html(txt.fetching + checkMark)
-    showProgressBar('#fetching-progress', bootstrapPool.length, bootstrapPool.length)
+    // Fetch done
+    setPhase('phase-fetch', 'done');
+    $('#fetching-status').text('Fetching from relays' + checkMark);
+    setProgress(bootstrapPool.length, bootstrapPool.length);
 
-    // ── PARALLEL PHASE: Serialize/Store + Relay Discovery simultaneously ────
-    // These two operations are independent — no reason to wait for one before
-    // starting the other.  On mobile this saves 2-5 seconds.
+    // ── PHASE: DOWNLOAD (parallel with relay discovery) ─────────────────────
+    setPhase('phase-download', 'active');
+    $('#file-download').text('Saving backup...');
 
     const serializePromise = serializeAndDownload(data, 'nostr-backup.jsonl');
     const discoveryPromise = discoverAndProbeRelays(data, pubkey, personalRelays);
 
-    // Wait for both to finish
     await Promise.all([serializePromise, discoveryPromise]);
 
-    $('#checking-relays-header-box').css('display', 'none')
-    $('#checking-relays-box').css('display', 'none')
-    
-    $('#file-download').html(txt.download)
+    setPhase('phase-download', 'done');
+    $('#file-download').text('Backup saved' + checkMark);
 
-    // Free the data reference — broadcastData holds the only ref now.
-    // This lets GC reclaim the serialization artifacts (Worker already
-    // finished and terminated at this point).
+    // ── PHASE: BROADCAST ────────────────────────────────────────────────────
+    setPhase('phase-broadcast', 'active');
+    $('#broadcasting-status').text('Broadcasting to relays...');
+    setProgress(0, relays.length);
+
+    $('#checking-relays-header').text('Broadcasting to Relays');
+    $('#checking-relays').html('');
+
     const broadcastData = data;
-    
-    $('#broadcasting-status').html(txt.broadcasting)
-    showProgressBar('#broadcasting-progress', relays.length)
-    
-    $('#checking-relays-header-box').css('display', 'flex')
-    $('#checking-relays-box').css('display', 'flex')
-    $('#checking-relays-header').text("Broadcasting to Relays:")
-
     await broadcastEvents(broadcastData)
 
-    $('#broadcasting-status').html(txt.broadcasting + checkMark)
-    showProgressBar('#broadcasting-progress', relays.length, relays.length)
+    setPhase('phase-broadcast', 'done');
+    $('#broadcasting-status').text('Broadcasting complete' + checkMark);
+    setProgress(relays.length, relays.length);
+
   } catch (err) {
     console.error("Process failed:", err);
     alert("An error occurred during the sync process. Check console for details.");
@@ -351,58 +378,45 @@ const justBroadcast = async (fileName) => {
 
 const broadcast = async (data) => {
   console.log(data)
-  // reset UI
-  $('#fetching-status').html('')
-  resetProgressBar('#fetching-progress')
-  $('#file-download').html('')
-  $('#events-found').text('')
-  $('#broadcasting-status').html('')
-  resetProgressBar('#broadcasting-progress')
-  // messages to show to user
-  const checkMark = '&#10003;'
-  const txt = {
-    broadcasting: 'Broadcasting to relays... ',
-    fetching: 'Loading from file... ',
-    download: `Downloading Backup file... ${checkMark}`,
-  }
-  // disable button (will be re-enable at the end of the process)
+  
+  showSyncPanel();
+  const checkMark = ' ✓';
+  
+  // disable buttons
   $('#fetch-and-broadcast').prop('disabled', true)
   $('#just-broadcast').prop('disabled', true)
-  // show and update fetching progress bar
-  showProgressBar('#fetching-progress', 1)
 
-  // inform user fetching is done
-  $('#fetching-status').html(txt.fetching + checkMark)
-  showProgressBar('#fetching-progress', 1, 1)
+  // Mark file load as done immediately
+  setPhase('phase-fetch', 'done');
+  $('#fetching-status').text('Loaded from file' + checkMark);
+  setProgress(1, 1);
 
   relays = await resolveRestoreRelayPool(data)
 
   if (relays.length === 0) {
-    $('#broadcasting-status').html('No relays available for broadcast.')
+    $('#broadcasting-status').text('No relays available for broadcast.')
+    setPhase('phase-broadcast', 'active');
     $('#fetch-and-broadcast').prop('disabled', false)
     $('#just-broadcast').prop('disabled', false)
     alert("No relays were found in the backup or trusted relay pool.");
     return;
   }
 
-  $('#checking-relays-header-box').css('display', 'none')
-  $('#checking-relays-box').css('display', 'none')
+  // ── PHASE: BROADCAST ──────────────────────────────────────────────────
+  setPhase('phase-broadcast', 'active');
+  $('#broadcasting-status').text('Broadcasting to relays...');
+  setProgress(0, relays.length);
 
-  // inform user that app is broadcasting events to relays
-  $('#broadcasting-status').html(txt.broadcasting)
-  // show and update broadcasting progress bar
-  showProgressBar('#broadcasting-progress', relays.length)
-  
-  $('#checking-relays-header-box').css('display', 'flex')
-  $('#checking-relays-box').css('display', 'flex')
-  $('#checking-relays-header').text("Broadcasting to Relays:")
+  $('#relay-section').show();
+  $('#checking-relays-header').text('Broadcasting to Relays');
 
   await broadcastEvents(data)
 
-  // inform user that broadcasting is done
-  $('#broadcasting-status').html(txt.broadcasting + checkMark)
-  showProgressBar('#broadcasting-progress', relays.length, relays.length)
-  // re-enable broadcast button
+  setPhase('phase-broadcast', 'done');
+  $('#broadcasting-status').text('Broadcasting complete' + checkMark);
+  setProgress(relays.length, relays.length);
+
+  // re-enable buttons
   $('#fetch-and-broadcast').prop('disabled', false)
   $('#just-broadcast').prop('disabled', false)
 }

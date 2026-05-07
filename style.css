@@ -3,7 +3,7 @@
 :root {
   --color-primary: #007bff;
   --color-secondary: #ccc;
-  --color-background: #202124;
+  --color-background: #212121;
   --color-text: #fff;
 }
 
@@ -17,7 +17,7 @@ body {
 .container {
   max-width: 600px;
   margin: 0 auto;
-  padding: 10px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,6 +27,7 @@ body {
 .logo{
   width: 40px;
   padding: 2px;
+  
 }
 
 .header {
@@ -41,9 +42,18 @@ body {
 }
 
 h1 {
-  font-size: 1.2rem;
-  font-weight: 700;
+
   line-height: 1.5;
+  /* Apply the linear gradient to the text content of the logo */
+    background: linear-gradient(90deg, #7f7dd1, #548dd9 100%, #548dd9 0);
+    -webkit-background-clip: text;
+    color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 25px;
+    font-weight: 600;
+    margin-top: 0%;
+    margin-bottom: 0%;
 }
 
 h2 {
@@ -78,14 +88,15 @@ a {
 
 button {
   padding: 8px 8px;
-  background-color: #0c53e2;
+  background: linear-gradient(90deg, #7f7dd1, #548dd9 100%, #548dd9 0);
   color: #f0ecec;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   margin-bottom: 5px;
   font-weight: bold;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
 }
 
 button:hover {
@@ -97,16 +108,42 @@ button:hover {
 .dataBase a {
   display: inline-block;
   padding: 5px 5px;
-  background-color: #434547;
+  background-color: #131314;
   color: #f0ecec;
   text-decoration: none;
   border: none;
-  font-size: x-small;
+  font-size: small;
   font-weight: 600;
   border-radius: 25px;
   margin-left: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
+}
+
+.install-app-button {
+  display: inline-block;
+  padding: 5px 10px;
+  background-color: #131314;
+  color: #f0ecec;
+  border: none;
+  font-size: small;
+  font-weight: 600;
+  border-radius: 25px;
+  margin-left: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
+}
+
+.install-app-button:hover {
+  background-color: #0056b3;
+}
+
+.install-app-button[hidden] {
+  display: none !important;
 }
 
 .dataBase a:hover {
@@ -121,35 +158,32 @@ footer {
 }
 
 .box {
-  background-color: #35373a;
-  padding: 20px;
+  background-color: #131314;
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-top: 8px;
+  padding-bottom: 8px;
   border-radius: 10px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-
-.progress-bar {
-  height: 10px;
-  background-color: #555;
-  border-radius: 10px;
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
+  font-family: 'Courier New', Courier, monospace;
+  width: 100%;
+  box-sizing: border-box;
   overflow: hidden;
 }
 
-.progress-bar::-webkit-progress-bar {
-  background-color: #555;
-  border-radius: 10px;
+.box-content {
+  width: 100%;
+  min-width: 0;
 }
 
-.progress-bar::-webkit-progress-value {
-  background-color: var(--color-primary);
-  border-radius: 10px;
-  animation: loading 2s ease-out infinite;
-}
+
+
 
 .space-between {
   display: flex;
   justify-content: center;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 
 .space-between-small {
@@ -164,12 +198,14 @@ footer {
   border: none;
   border-radius: 4px;
   box-sizing: border-box;
-  min-width: 100%;
+  
   margin: 0 auto;
   display: block;
   color: var(--color-text);
-  background-color: #35373a;
-  width: 290px;
+  background-color: #131314;
+  width: 350px;
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+  animation: slideUp 0.5s ease-in-out forwards;
 }
 
 
@@ -230,6 +266,7 @@ input[type="file"]::-webkit-file-upload-button {
   cursor: pointer;
   margin: 4px;
   font-weight: 600;
+  
 }
 
 input[type="file"]::-webkit-file-upload-button:hover {
@@ -266,16 +303,18 @@ input[type="file"]::-webkit-file-upload-button:hover {
     color: #f0ecec;
     text-decoration: none;
     border: none;
-    font-size: x-small;
+    font-size: small;
     font-weight: 600;
     border-radius: 25px;
     cursor: pointer;
     transition: background-color 0.3s;
+    box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
+    animation: slideUp 0.5s ease-in-out forwards;
 }
 
 /* Style the slider knob */
 .toggle-button input[type="checkbox"]+label::before {
-  
+
   display: none;
   
 }
@@ -287,6 +326,53 @@ input[type="file"]::-webkit-file-upload-button:hover {
 
 
 
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translatex(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translatex(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 
 
 footer p {
@@ -301,7 +387,171 @@ footer p {
   font-weight: 600;
 }
 
-#checking-relays{
-  font-weight: 400;
+/* ── Sync Status Panel ──────────────────────────────────────────────── */
+
+.sync-panel {
+  width: 100%;
+  box-sizing: border-box;
+  background: #131314;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 5px 7px rgba(0,0,0,0.35);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+}
+
+.sync-phases {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sync-phase {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  color: #888;
+  transition: color 0.2s;
+}
+
+.sync-phase.active { color: #fff; }
+.sync-phase.done   { color: #4ecdc4; }
+
+.sync-phase .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #444;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.sync-phase.active .dot { background: #548dd9; box-shadow: 0 0 6px #548dd9; }
+.sync-phase.done   .dot { background: #4ecdc4; }
+
+#sync-progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #2a2a2d;
+  display: block;
+  margin-bottom: 8px;
+}
+
+#sync-progress::-webkit-progress-bar {
+  background: #2a2a2d;
+  border-radius: 3px;
+}
+
+#sync-progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #7f7dd1, #548dd9);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+#sync-progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #7f7dd1, #548dd9);
+  border-radius: 3px;
+}
+
+.sync-events {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #aaa;
+  margin: 0 0 6px;
+  min-height: 18px;
+}
+
+.relay-section {
+  border-top: 1px solid #2a2a2d;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.relay-header {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px;
+  font-weight: 600;
+  text-align: left;
+  display: block;
+}
+
+.relay-scroll {
+  max-height: 120px;
+  overflow-y: auto;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: #888;
+  text-align: left;
+  -webkit-overflow-scrolling: touch;
+}
+
+.relay-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+
+.relay-scroll::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+
+.file-info-compact {
+  background: #1a1a1c;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin: 12px auto;
+  width: 100%;
+  max-width: 350px; /* Match pubkey width */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: slideUp 0.3s ease-out;
+  overflow: hidden;
+}
+
+.file-name {
+  flex: 1 1 0%;
+  min-width: 0;
+  font-weight: 500;
+  color: #fff;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-size {
+  color: #888;
+  font-size: 0.65rem;
+  font-family: 'Courier New', monospace;
+  background: #000;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+
+.file-clear {
+  color: #888;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.2s;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.file-clear:hover {
+  color: #ff5f5f;
+  transform: scale(1.2);
 }
 

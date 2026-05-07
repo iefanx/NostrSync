@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
 
-  <script src="https://unpkg.com/idb@4.0.3/build/iife/index-min.js"></script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- Primary Meta Tags -->
   <title>NostrSync</title>
@@ -14,7 +14,7 @@
 
 
   <!-- CSS -->
-  <link rel="stylesheet" href="/nostrnet/style.css" />
+  <link rel="stylesheet" href="/style.css" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <!-- Lightning -->
@@ -52,9 +52,8 @@
 
       <div id="verify-status" style="display: none;"></div>
 
-      <div id="toggleCustomRelays" class="toggle-button" onclick="toggleCustomRelays()"> <label> Custom Relays</label></div>
-      <a href="/nostrdb/index.html" class="db-btn">LocalDatabase</a>
-      <div id="toggleFileInput" class="toggle-button" onclick="toggleFileInput()"> <label> Restore</label></div>
+      <div id="toggleCustomRelays" class="toggle-button" onclick="toggleCustomRelays()"> <label id="label-custom-relays"> Custom Relays</label></div>
+      <div id="toggleBroadcastOnly" class="toggle-button" onclick="toggleBroadcastOnly()"> <label id="label-broadcast-only"> Broadcast only</label></div>
       <button id="install-app" class="install-app-button" type="button" hidden>Install App</button>
 
     </div>
@@ -86,25 +85,61 @@
 
             </div>
             <div class="space-between-small">
-              <div class="space-between">
-
-                <!-- Add a button to toggle the file input -->
-                <!-- Use a div as a toggle element -->
-
-
+              <div style="width: 100%;">
                 <!-- Add a file input with a class to control visibility -->
                 <input type="file" class="file-selector hidden" id="file-selector" accept=".json,.jsonl,.js,application/json,text/javascript">
 
-
+                <div id="file-info-card" class="file-info-compact" style="display: none;">
+                  <span id="display-file-name" class="file-name"></span>
+                  <span id="display-file-size" class="file-size"></span>
+                  <span class="file-clear" onclick="clearFileSelection()">✕</span>
+                </div>
+              </div>
 
                 <script>
                   var fileName = ""
 
+                  function formatBytes(bytes, decimals = 2) {
+                    if (bytes === 0) return '0 Bytes';
+                    const k = 1024;
+                    const dm = decimals < 0 ? 0 : decimals;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+                  }
+
+                  function clearFileSelection() {
+                    fileName = "";
+                    document.getElementById('file-selector').value = "";
+                    $('#file-info-card').slideUp();
+                    $('#just-broadcast').hide();
+                    $('#fetch-and-broadcast').fadeIn();
+                    $('#label-broadcast-only').css({
+                      'background': '',
+                      'color': '',
+                      'border': ''
+                    });
+                  }
+
                   const fileSelector = document.getElementById('file-selector');
                   fileSelector.addEventListener('change', (event) => {
-                    fileName = event.target.files[0];
-                    $('#fetch-and-broadcast').css('display', 'none')
-                    $('#just-broadcast').css('display', 'inline-block')
+                    const file = event.target.files[0];
+                    if (file) {
+                      fileName = file;
+                      $('#display-file-name').text(file.name);
+                      $('#display-file-size').text(formatBytes(file.size));
+                      $('#file-info-card').slideDown();
+                      
+                      $('#fetch-and-broadcast').hide();
+                      $('#just-broadcast').fadeIn().css('display', 'inline-block');
+                      
+                      // Highlight the button
+                      $('#label-broadcast-only').css({
+                        'background': 'linear-gradient(90deg, #7f7dd1, #548dd9)',
+                        'color': '#fff',
+                        'border': 'none'
+                      });
+                    }
                   });
                 </script>
               </div>
@@ -120,24 +155,6 @@
             display: none;
           }
         </style>
-        <script>
-          function toggleFileInput() {
-            var fileInput = document.getElementById('file-selector');
-
-            // Toggle the visibility of the file input
-            if (fileInput.style.display === 'none' || fileInput.style.display === '') {
-              fileInput.style.display = 'block';
-            } else {
-              fileInput.style.display = 'none';
-            }
-          }
-        </script>
-
-
-
-
-
-
 
 
         <p>
@@ -151,30 +168,17 @@
     </div>
     </form>
     </div>
-    <div class="box">
-      <div class="box-content">
-        <p id="fetching-status"></p>
-        <p style="padding-top: 2px">
-          <progress type="range" id="fetching-progress" name="fetching-progress" min="0" max="180" value="0"
-            style="visibility: hidden" />
-        </p>
+    <div class="sync-panel" id="sync-panel" style="display:none">
+      <div class="sync-phases">
+        <div class="sync-phase" id="phase-fetch"><span class="dot"></span><span id="fetching-status"></span></div>
+        <div class="sync-phase" id="phase-download"><span class="dot"></span><span id="file-download"></span></div>
+        <div class="sync-phase" id="phase-broadcast"><span class="dot"></span><span id="broadcasting-status"></span></div>
       </div>
-      <div class="box-content" id="checking-relays-header-box">
-        <p id="checking-relays-header"></p>
-      </div>
-      <div class="box-content" id="checking-relays-box">
-        <p id="checking-relays"></p>
-      </div>
-      <div class="box-content">
-        <p id="file-download"></p>
-        <p id="events-found"></p>
-      </div>
-      <div class="box-content">
-        <p id="broadcasting-status"></p>
-        <p style="padding-top: 2px">
-          <progress type="range" id="broadcasting-progress" name="broadcasting-progress" min="0" max="180" value="0"
-            style="visibility: hidden" />
-        </p>
+      <progress id="sync-progress" max="1" value="0"></progress>
+      <p id="events-found" class="sync-events"></p>
+      <div class="relay-section" id="relay-section" style="display:none">
+        <p id="checking-relays-header" class="relay-header"></p>
+        <div id="checking-relays" class="relay-scroll"></div>
       </div>
     </div>
 

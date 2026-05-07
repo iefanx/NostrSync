@@ -1,5 +1,5 @@
-const STATIC_CACHE = "nostrsync-static-v3";
-const RUNTIME_CACHE = "nostrsync-runtime-v3";
+const STATIC_CACHE = "nostrsync-static-v5";
+const RUNTIME_CACHE = "nostrsync-runtime-v5";
 
 const APP_SHELL = [
   "/",
@@ -9,16 +9,11 @@ const APP_SHELL = [
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/trustedrelays.json",
-  "/nostrnet/style.css",
+  "/style.css",
   "/js/nostr-utils.js",
   "/js/nostr-broadcast.js",
   "/js/relays.js",
   "/js/pwa.js",
-  "/js/serialize-worker.js",
-  "/nostrdb/index.html",
-  "/nostrdb/script.js",
-  "/nostrnet/nostrnet.html",
-  "/nostrnet/database.html",
 ];
 
 self.addEventListener("install", (event) => {
