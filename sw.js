@@ -1,5 +1,5 @@
-const STATIC_CACHE = "nostrsync-static-v2";
-const RUNTIME_CACHE = "nostrsync-runtime-v2";
+const STATIC_CACHE = "nostrsync-static-v3";
+const RUNTIME_CACHE = "nostrsync-runtime-v3";
 
 const APP_SHELL = [
   "/",
@@ -14,6 +14,7 @@ const APP_SHELL = [
   "/js/nostr-broadcast.js",
   "/js/relays.js",
   "/js/pwa.js",
+  "/js/serialize-worker.js",
   "/nostrdb/index.html",
   "/nostrdb/script.js",
   "/nostrnet/nostrnet.html",

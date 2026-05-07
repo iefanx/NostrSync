@@ -38,6 +38,8 @@ const hexa2npub = (hex) => {
 const parsePubkey = (pubkey) =>
   pubkey.match("npub1") ? npub2hexa(pubkey) : pubkey;
 
+// ── IndexedDB helpers ───────────────────────────────────────────────────────
+
 // Function to open the IndexedDB database
 async function openDatabase() {
   const dbPromise = idb.openDB("NostrDB", 2, {
@@ -67,78 +69,147 @@ function generateUniqueFileName(originalFileName) {
   return uniqueFileName;
 }
 
-const serializeBackupData = (data, fileName) => {
+// ── Mobile detection ────────────────────────────────────────────────────────
+
+const isMobile = () =>
+  navigator.maxTouchPoints > 0 ||
+  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// ── Serialization + Storage (Worker-based with main-thread fallback) ────────
+
+// Main-thread fallback: creates Blob directly using array-of-strings.
+const createBackupBlob = (data, fileName) => {
   if (fileName.toLowerCase().endsWith('.jsonl')) {
-    return {
-      content: data.map((event) => JSON.stringify(event)).join("\n") + "\n",
-      type: "application/x-ndjson",
-    };
+    const parts = [];
+    for (const event of data) {
+      parts.push(JSON.stringify(event) + "\n");
+    }
+    return new Blob(parts, { type: "application/x-ndjson" });
   }
 
-  return {
-    content: JSON.stringify(data, null, 2),
-    type: "application/json",
-  };
+  return new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
 }
 
-const downloadFileCopy = (data, fileName) => {
-  const serializedBackup = serializeBackupData(data, fileName);
+// Trigger a browser download from a Blob URL or Blob.
+const triggerDownload = (blobOrUrl, fileName) => {
+  const url = typeof blobOrUrl === 'string'
+    ? blobOrUrl
+    : URL.createObjectURL(blobOrUrl);
   const tempLink = document.createElement("a");
-  const taBlob = new Blob([serializedBackup.content], { type: serializedBackup.type });
-  tempLink.setAttribute("href", URL.createObjectURL(taBlob));
+  tempLink.setAttribute("href", url);
   tempLink.setAttribute("download", fileName);
   tempLink.click();
+  // Revoke after a short delay to ensure the download starts
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 };
 
-async function downloadFile(data, originalFileName) {
+/**
+ * serializeAndStore — Uses a Web Worker to serialize events and store in
+ * IndexedDB off the main thread.  Falls back to main-thread if Workers
+ * are unavailable (e.g. older browsers or file:// origin).
+ *
+ * Returns a Promise that resolves when the download is triggered.
+ */
+async function serializeAndStore(data, fileName) {
+  // Try Worker-based path first
+  if (typeof Worker !== 'undefined') {
+    try {
+      return await _workerSerialize(data, fileName);
+    } catch (err) {
+      console.warn("Worker serialization failed, falling back to main thread:", err);
+    }
+  }
+
+  // Main-thread fallback
+  return _mainThreadSerialize(data, fileName);
+}
+
+function _workerSerialize(data, fileName) {
+  return new Promise((resolve, reject) => {
+    let worker;
+    try {
+      worker = new Worker("/js/serialize-worker.js");
+    } catch (e) {
+      reject(e);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      worker.terminate();
+      reject(new Error("Worker timed out after 60s"));
+    }, 60_000);
+
+    worker.onmessage = (msg) => {
+      const { type, blobUrl, size, error } = msg.data;
+
+      if (type === "progress") {
+        // Could update a secondary progress indicator here
+        return;
+      }
+
+      if (type === "done") {
+        clearTimeout(timeout);
+        console.log(`[Worker] Serialization complete: ${(size / 1024 / 1024).toFixed(2)} MB`);
+        triggerDownload(blobUrl, fileName);
+        worker.terminate();
+        resolve();
+      }
+
+      if (type === "error") {
+        clearTimeout(timeout);
+        worker.terminate();
+        reject(new Error(error));
+      }
+    };
+
+    worker.onerror = (err) => {
+      clearTimeout(timeout);
+      worker.terminate();
+      reject(err);
+    };
+
+    // Send events to worker — structured clone transfers the array
+    worker.postMessage({ type: "serialize", events: data, fileName });
+  });
+}
+
+async function _mainThreadSerialize(data, fileName) {
+  const blob = createBackupBlob(data, fileName);
+  triggerDownload(blob, fileName);
+
+  // Try to persist in IndexedDB (non-fatal on failure)
   try {
-    // Step 1: Generate a unique file name
-    const uniqueFileName = generateUniqueFileName(originalFileName);
-
-    // Step 2: Serialize the backup in the requested export format.
-    const serializedBackup = serializeBackupData(data, originalFileName);
-
-    // Step 3: Create a Blob from the serialized backup.
-    const taBlob = new Blob([serializedBackup.content], { type: serializedBackup.type });
-
-    // Step 4: Optionally, store the file in IndexedDB (if needed)
+    const uniqueFileName = generateUniqueFileName(fileName);
     const fileObject = {
       name: uniqueFileName,
-      content: taBlob,
-      size: taBlob.size,
+      content: blob,
+      size: blob.size,
       date: new Date().toLocaleDateString(),
       time: new Date().toLocaleTimeString(),
     };
 
-    // Step 5: Optionally, open a connection to the IndexedDB database
     const db = await openDatabase();
-
-    // Step 6: Optionally, store the file object in IndexedDB
     await storeFile(db, fileObject);
+    console.log("Backup stored in IndexedDB:", uniqueFileName);
   } catch (error) {
-    console.error("Error while downloading and storing the file:", error);
-    // Handle the error, possibly by showing a user-friendly message
+    console.warn("IndexedDB storage failed (download still succeeded):", error);
   }
 }
 
-const updateRelayStatus = (relay, status, addToCount, relayStatusAndCount) => {
-  if (relayStatusAndCount[relay] == undefined) {
-    relayStatusAndCount[relay] = {};
-  }
+// ── Throttled relay status display ──────────────────────────────────────────
 
-  if (status) relayStatusAndCount[relay].status = status;
+let _statusRafPending = false;
+let _pendingRelayStatus = null;
 
-  if (relayStatusAndCount[relay].count != undefined)
-    relayStatusAndCount[relay].count =
-      relayStatusAndCount[relay].count + addToCount;
-  else relayStatusAndCount[relay].count = addToCount;
+const _flushRelayStatus = () => {
+  _statusRafPending = false;
+  if (!_pendingRelayStatus) return;
 
-  displayRelayStatus(relayStatusAndCount);
-};
+  const relayStatusAndCount = _pendingRelayStatus;
+  const keys = Object.keys(relayStatusAndCount);
 
-const displayRelayStatus = (relayStatusAndCount) => {
-  if (Object.keys(relayStatusAndCount).length > 0) {
-    let newText = Object.keys(relayStatusAndCount)
+  if (keys.length > 0) {
+    let newText = keys
       .map(
         (it) =>
           it.replace("wss://", "").replace("ws://", "") +
@@ -156,8 +227,53 @@ const displayRelayStatus = (relayStatusAndCount) => {
   }
 };
 
-// fetch events from relay, returns a promise
-const fetchFromRelay = async (relay, filters, pubkey, events, relayStatus) =>
+const updateRelayStatus = (relay, status, addToCount, relayStatusAndCount) => {
+  if (relayStatusAndCount[relay] == undefined) {
+    relayStatusAndCount[relay] = {};
+  }
+
+  if (status) relayStatusAndCount[relay].status = status;
+
+  if (relayStatusAndCount[relay].count != undefined)
+    relayStatusAndCount[relay].count =
+      relayStatusAndCount[relay].count + addToCount;
+  else relayStatusAndCount[relay].count = addToCount;
+
+  // Throttle DOM updates via requestAnimationFrame (coalesce rapid updates)
+  _pendingRelayStatus = relayStatusAndCount;
+  if (!_statusRafPending) {
+    _statusRafPending = true;
+    requestAnimationFrame(_flushRelayStatus);
+  }
+};
+
+const displayRelayStatus = (relayStatusAndCount) => {
+  // Immediate flush for explicit calls (e.g. clearing status)
+  _pendingRelayStatus = relayStatusAndCount;
+  _flushRelayStatus();
+};
+
+// ── Throttled event counter ─────────────────────────────────────────────────
+
+let _eventCountRafPending = false;
+let _pendingEventCount = 0;
+
+const _flushEventCount = () => {
+  _eventCountRafPending = false;
+  $("#events-found").text(`${_pendingEventCount} events found`);
+};
+
+const updateEventCount = (count) => {
+  _pendingEventCount = count;
+  if (!_eventCountRafPending) {
+    _eventCountRafPending = true;
+    requestAnimationFrame(_flushEventCount);
+  }
+};
+
+// ── Fetch events from a single relay ────────────────────────────────────────
+
+const fetchFromRelay = async (relay, filters, pubkey, events, eventCount, relayStatus) =>
   new Promise((resolve, reject) => {
     try {
       updateRelayStatus(relay, "Starting", 0, relayStatus);
@@ -196,8 +312,8 @@ const fetchFromRelay = async (relay, filters, pubkey, events, relayStatus) =>
 
           const { id } = data;
 
-          // don't save/reboradcast kind 3s that are not from the author.
-          // their are too big.
+          // don't save/rebroadcast kind 3s that are not from the author.
+          // they are too big.
           if (data.kind == 3 && data.pubkey != pubkey) {
             return;
           }
@@ -208,8 +324,9 @@ const fetchFromRelay = async (relay, filters, pubkey, events, relayStatus) =>
           if (events[id]) return;
           else events[id] = data;
 
-          // show how many events were found until this moment
-          $("#events-found").text(`${Object.keys(events).length} events found`);
+          // Increment counter and update UI (throttled — no O(n²))
+          eventCount.value++;
+          updateEventCount(eventCount.value);
         }
         // end of subscription messages
         if (msgType === "EOSE" && subscriptionId === subsId) {
@@ -238,12 +355,14 @@ const fetchFromRelay = async (relay, filters, pubkey, events, relayStatus) =>
     }
   });
 
-// query relays for events published by this pubkey
+// ── Query relays for events (sliding window pool) ───────────────────────────
+
 const getEvents = async (filters, pubkey, customPool) => {
   const events = {};
+  const eventCount = { value: 0 }; // Mutable counter shared across all relay workers
   const pool = customPool || relays;
   const relayStatus = {};
-  const poolSize = 30; // Maintain 30 active connections
+  const poolSize = 30; // Maintain 30 active fetch connections
   let processedCount = 0;
 
   console.log(`Starting dynamic fetch pool for ${pool.length} relays...`);
@@ -255,7 +374,7 @@ const getEvents = async (filters, pubkey, customPool) => {
     if (queue.length === 0) return;
     const relay = queue.shift();
     try {
-      await fetchFromRelay(relay, filters, pubkey, events, relayStatus);
+      await fetchFromRelay(relay, filters, pubkey, events, eventCount, relayStatus);
     } catch (e) {
       console.warn(`Fetch failed for ${relay}`, e);
     } finally {
@@ -279,7 +398,13 @@ const getEvents = async (filters, pubkey, customPool) => {
   return Object.keys(events).map((id) => events[id]);
 };
 
-// send events to a relay, returns a promisse
+// ── Send events to a relay (chunked with backpressure) ──────────────────────
+
+const BROADCAST_BATCH_SIZE = 50; // Send 50 events, then yield to event loop
+
+// Yield control to the event loop to prevent UI freezes and WS buffer overflow
+const yieldToEventLoop = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 const sendToRelay = async (relay, data, relayStatus) =>
   new Promise((resolve, reject) => {
     try {
@@ -293,17 +418,28 @@ const sendToRelay = async (relay, data, relayStatus) =>
         reject("timeout");
       }, 10_000);
 
-      // fetch events from relay
-      ws.onopen = () => {
+      // send events in chunked batches
+      ws.onopen = async () => {
         updateRelayStatus(relay, "Sending", 0, relayStatus);
-        for (evnt of data) {
-          clearTimeout(myTimeout);
-          myTimeout = setTimeout(() => {
-            ws.close();
-            reject("timeout");
-          }, 10_000);
 
-          ws.send(JSON.stringify(["EVENT", evnt]));
+        try {
+          for (let i = 0; i < data.length; i++) {
+            clearTimeout(myTimeout);
+            myTimeout = setTimeout(() => {
+              ws.close();
+              reject("timeout");
+            }, 10_000);
+
+            ws.send(JSON.stringify(["EVENT", data[i]]));
+
+            // Yield every BROADCAST_BATCH_SIZE events to prevent
+            // WebSocket buffer overflow and keep UI responsive
+            if ((i + 1) % BROADCAST_BATCH_SIZE === 0) {
+              await yieldToEventLoop();
+            }
+          }
+        } catch (sendErr) {
+          console.warn(`Send error on ${relay}:`, sendErr);
         }
       };
       // Listen for messages
@@ -345,13 +481,15 @@ const sendToRelay = async (relay, data, relayStatus) =>
     }
   });
 
-// broadcast events to list of relays
+// ── Broadcast events to list of relays (adaptive pool) ──────────────────────
+
 const broadcastEvents = async (data) => {
-  const poolSize = 30; // Maintain 30 active connections
+  // Adaptive pool size: fewer concurrent connections on mobile
+  const poolSize = isMobile() ? 10 : 15;
   const relayStatus = {};
   let processedCount = 0;
 
-  console.log(`Starting dynamic broadcast pool for ${relays.length} relays...`);
+  console.log(`Starting dynamic broadcast pool (${poolSize} workers) for ${relays.length} relays...`);
 
   const queue = [...relays];
   const workers = [];

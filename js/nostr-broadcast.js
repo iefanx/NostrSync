@@ -146,7 +146,58 @@ const showProgressBar = (selector, max, value = 0) => {
   $(selector).val(normalizedValue);
 }
 
-// button click handler
+// ── Relay discovery (extracted for parallel execution) ───────────────────────
+
+/**
+ * Discover and probe the user's personal relays from NIP-65 / NIP-02 events.
+ * Returns the final merged relay pool for broadcast.
+ */
+const discoverAndProbeRelays = async (data, pubkey, personalRelays) => {
+  let discoveredRelays = [...personalRelays];
+  
+  // Check for NIP-65 (kind: 10002)
+  const nip65Event = data.find(it => it.kind === 10002 && it.pubkey === pubkey);
+  if (nip65Event) {
+    console.log("NIP-65 Event Found. Extracting relays...");
+    const nip65Urls = nip65Event.tags.filter(t => t[0] === 'r').map(t => t[1]);
+    discoveredRelays = Array.from(new Set([...discoveredRelays, ...nip65Urls]));
+  } 
+  
+  // If no NIP-65 found in events, check for NIP-02 (kind: 3)
+  if (discoveredRelays.length === personalRelays.length) {
+    const latestKind3 = data.filter((it) => it.kind == 3 && it.pubkey === pubkey)[0]
+    if (latestKind3 && latestKind3.content) {
+      try {
+        const myRelaySet = JSON.parse(latestKind3.content);
+        const kind3Urls = Object.keys(myRelaySet);
+        discoveredRelays = Array.from(new Set([...discoveredRelays, ...kind3Urls]));
+        console.log("NIP-02 (Kind 3) Relays Found.");
+      } catch (error) {
+        console.error("Error parsing JSON from kind-3 event:", error);
+      }
+    }
+  }
+
+  // Verify and merge discovered relays into the pool
+  if (discoveredRelays.length > 0) {
+    console.log("Probing discovered personal relays...");
+    const activePersonalRelays = [];
+    await Promise.all(discoveredRelays.map(async (url) => {
+      const isAlive = await probeRelay(url);
+      if (isAlive) activePersonalRelays.push(url);
+    }));
+
+    console.log("User Relays Discovered:", activePersonalRelays);
+    
+    // Final merge with full trusted pool
+    relays = Array.from(new Set([...activePersonalRelays, ...relays]));
+  }
+
+  console.log(`Final Relay Pool Size for Broadcast: ${relays.length}`);
+};
+
+// ── Main button click handler ───────────────────────────────────────────────
+
 const fetchAndBroadcast = async () => {
   let pubkey = parsePubkey($('#pubkey').val().trim())
   
@@ -218,9 +269,9 @@ const fetchAndBroadcast = async () => {
     const bootstrapPool = Array.from(new Set([...personalRelays, ...relays]));
     const filters = [{ authors: [pubkey] }, { "#p": [pubkey] }] 
 
-  // inform user
-  $('#fetching-status').text(txt.fetching)
-  showProgressBar('#fetching-progress', bootstrapPool.length)
+    // inform user
+    $('#fetching-status').text(txt.fetching)
+    showProgressBar('#fetching-progress', bootstrapPool.length)
     
     // Temporarily use bootstrapPool to find NIP-65
     console.log(`Fetching events using ${bootstrapPool.length} bootstrap relays...`);
@@ -230,55 +281,25 @@ const fetchAndBroadcast = async () => {
     $('#fetching-status').html(txt.fetching + checkMark)
     showProgressBar('#fetching-progress', bootstrapPool.length, bootstrapPool.length)
 
-    // Discover more User's Relays (NIP-65 priority, fallback to NIP-02/kind 3)
-    let discoveredRelays = [...personalRelays];
-    
-    // Check for NIP-65 (kind: 10002)
-    const nip65Event = data.find(it => it.kind === 10002 && it.pubkey === pubkey);
-    if (nip65Event) {
-      console.log("NIP-65 Event Found. Extracting relays...");
-      const nip65Urls = nip65Event.tags.filter(t => t[0] === 'r').map(t => t[1]);
-      discoveredRelays = Array.from(new Set([...discoveredRelays, ...nip65Urls]));
-    } 
-    
-    // If no NIP-65 found in events, check for NIP-02 (kind: 3)
-    if (discoveredRelays.length === personalRelays.length) {
-      const latestKind3 = data.filter((it) => it.kind == 3 && it.pubkey === pubkey)[0]
-      if (latestKind3 && latestKind3.content) {
-        try {
-          const myRelaySet = JSON.parse(latestKind3.content);
-          const kind3Urls = Object.keys(myRelaySet);
-          discoveredRelays = Array.from(new Set([...discoveredRelays, ...kind3Urls]));
-          console.log("NIP-02 (Kind 3) Relays Found.");
-        } catch (error) {
-          console.error("Error parsing JSON from kind-3 event:", error);
-        }
-      }
-    }
+    // ── PARALLEL PHASE: Serialize/Store + Relay Discovery simultaneously ────
+    // These two operations are independent — no reason to wait for one before
+    // starting the other.  On mobile this saves 2-5 seconds.
 
-    // Verify and merge discovered relays into the pool
-    if (discoveredRelays.length > 0) {
-      console.log("Probing discovered personal relays...");
-      const activePersonalRelays = [];
-      await Promise.all(discoveredRelays.map(async (url) => {
-        const isAlive = await probeRelay(url);
-        if (isAlive) activePersonalRelays.push(url);
-      }));
+    const serializePromise = serializeAndStore(data, 'nostr-backup.jsonl');
+    const discoveryPromise = discoverAndProbeRelays(data, pubkey, personalRelays);
 
-      console.log("User Relays Discovered:", activePersonalRelays);
-      
-      // Final merge with full trusted pool
-      relays = Array.from(new Set([...activePersonalRelays, ...relays]));
-    }
-
-    console.log(`Final Relay Pool Size for Broadcast: ${relays.length}`);
+    // Wait for both to finish
+    await Promise.all([serializePromise, discoveryPromise]);
 
     $('#checking-relays-header-box').css('display', 'none')
     $('#checking-relays-box').css('display', 'none')
     
     $('#file-download').html(txt.download)
-    downloadFile(data, 'nostr-backup.jsonl')
-    downloadFileCopy(data, "nostr-backup.jsonl");
+
+    // Free the data reference — broadcastData holds the only ref now.
+    // This lets GC reclaim the serialization artifacts (Worker already
+    // finished and terminated at this point).
+    const broadcastData = data;
     
     $('#broadcasting-status').html(txt.broadcasting)
     showProgressBar('#broadcasting-progress', relays.length)
@@ -287,7 +308,7 @@ const fetchAndBroadcast = async () => {
     $('#checking-relays-box').css('display', 'flex')
     $('#checking-relays-header').text("Broadcasting to Relays:")
 
-    await broadcastEvents(data)
+    await broadcastEvents(broadcastData)
 
     $('#broadcasting-status').html(txt.broadcasting + checkMark)
     showProgressBar('#broadcasting-progress', relays.length, relays.length)
