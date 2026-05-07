@@ -1,5 +1,5 @@
-const STATIC_CACHE = "nostrsync-static-v5";
-const RUNTIME_CACHE = "nostrsync-runtime-v5";
+const STATIC_CACHE = "nostrsync-static-v6";
+const RUNTIME_CACHE = "nostrsync-runtime-v6";
 
 const APP_SHELL = [
   "/",

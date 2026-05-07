@@ -139,20 +139,41 @@ const _flushRelayStatus = () => {
   const keys = Object.keys(relayStatusAndCount);
 
   if (keys.length > 0) {
+    let completedCount = 0;
+    
     // Only show active relays (non-Done) first, then Done at the bottom
     // to keep the scrollable area useful
     let newText = keys
       .map(
-        (it) =>
-          it.replace("wss://", "").replace("ws://", "") +
-          ": " +
-          relayStatusAndCount[it].status +
-          " (" +
-          relayStatusAndCount[it].count +
-          ")"
+        (it) => {
+          const status = relayStatusAndCount[it].status;
+          if (status === "Done" || status === "Error") {
+            completedCount++;
+          }
+          return it.replace("wss://", "").replace("ws://", "") +
+            ": " +
+            status +
+            " (" +
+            relayStatusAndCount[it].count +
+            ")";
+        }
       )
       .join("<br />");
+      
+      // Update the header with the progress
+    const headerPrefix = $("#checking-relays-header").text().split(' (')[0];
+    if (headerPrefix) {
+      const totalRelays = (window.relays && window.relays.length > 0) ? window.relays.length : keys.length;
+      $("#checking-relays-header").text(`${headerPrefix} (${completedCount}/${totalRelays})`);
+    }
+
     $("#checking-relays").html(newText);
+    
+    // Auto-scroll to the bottom as new relays are added
+    const scrollContainer = document.getElementById("checking-relays");
+    if (scrollContainer) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
   } else {
     $("#checking-relays").html("");
   }
@@ -359,16 +380,33 @@ const sendToRelay = async (relay, data, relayStatus) =>
 
         try {
           for (let i = 0; i < data.length; i++) {
+            // Reset timeout for each event sent
             clearTimeout(myTimeout);
             myTimeout = setTimeout(() => {
               ws.close();
               reject("timeout");
             }, 10_000);
 
+            // True Network Backpressure:
+            // If the WebSocket buffer gets larger than 512KB, pause the loop.
+            // This prevents the JS from generating millions of strings in RAM 
+            // faster than the mobile connection can upload them, which causes OOM crashes.
+            if (ws.bufferedAmount > 512 * 1024) {
+              while (ws.readyState === WebSocket.OPEN && ws.bufferedAmount > 512 * 1024) {
+                // Wait 50ms for the network to drain the buffer
+                await new Promise((resolve) => setTimeout(resolve, 50));
+              }
+            }
+            
+            // Abort if the connection closed while we were waiting
+            if (ws.readyState !== WebSocket.OPEN) {
+              break;
+            }
+
             ws.send(JSON.stringify(["EVENT", data[i]]));
 
             // Yield every BROADCAST_BATCH_SIZE events to prevent
-            // WebSocket buffer overflow and keep UI responsive
+            // main thread lockup and keep UI responsive
             if ((i + 1) % BROADCAST_BATCH_SIZE === 0) {
               await yieldToEventLoop();
             }
