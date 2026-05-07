@@ -1,205 +1,211 @@
 <!DOCTYPE html>
 <html data-theme="dark" lang="en">
-  <head>
-    <meta charset="utf-8" />
 
-    <script src="https://unpkg.com/idb@4.0.3/build/iife/index-min.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Primary Meta Tags -->
-    <title>NostrSync</title>
-    <meta name="title" content="Nostr Backup Service by NostrSync" />
-    <meta
-      name="description"
-      content="Fetch, backup and broadcast your Nostr events" />
+<head>
+  <meta charset="utf-8" />
 
-   
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="/nostrnet/style.css" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <!-- Lightning -->
-    <meta name="lightning" content="realiefan@ln.tips" />
-    <!-- PWA -->
-    <meta name="theme-color" content="#202124" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    
-    
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NostrSync</title>
-  </head>
+  <script src="https://unpkg.com/idb@4.0.3/build/iife/index-min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Primary Meta Tags -->
+  <title>NostrSync</title>
+  <meta name="title" content="Nostr Backup Service by NostrSync" />
+  <meta name="description" content="Fetch, backup and broadcast your Nostr events" />
 
-  <body>
-    
-    <main class="container">
-      <div class="header-space">
-        <div class="header">
-          <div class="logo-container">
-            
-          </div>
-          <h1>NostrNet Backup
-          </h1>
+
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/nostrnet/style.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <!-- Lightning -->
+  <meta name="lightning" content="realiefan@ln.tips" />
+  <!-- PWA -->
+  <meta name="theme-color" content="#202124" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NostrSync</title>
+</head>
+
+<body>
+
+  <main class="container">
+    <div class="header-space">
+      <div class="header">
+        <div class="logo-container">
+
         </div>
-
+        <h1>NostrSync
+        </h1>
       </div>
-      <h2>This feature will download all your <b>Nostr data from all the relays, create a copy, and broadcast it to all the Nostr relays.</b> The copy will also be stored in the
-         <b>local database</b> You can minimize this <b>but don't close the NostrNet app.</b> 
-      </h2>
-      <div class="dataBase">
 
-        <div id="verify-status" style="display: none;"></div>
-      
-      <div id="toggleCustomRelays" class="toggle-button" onclick="toggleCustomRelays()"> <label> Custom Relays</label></div>
+    </div>
+    <h2>NostrSync will download all your <b>Nostr data from all the relays, create a copy, and broadcast it to all the
+        Nostr relays.</b> The copy will also be stored in the
+      <b>local database</b> You can minimize this <b>but don't close the NostrNet app.</b>
+    </h2>
+    <div class="dataBase">
+
+      <div id="verify-status" style="display: none;"></div>
+
+      <div id="toggleCustomRelays" class="toggle-button" onclick="toggleCustomRelays()"> <label> Custom Relays</label>
+      </div>
       <a href="/nostrnet/database.html" class="db-btn">LocalDatabase</a>
       <div id="toggleFileInput" class="toggle-button" onclick="toggleFileInput()"> <label> Restore</label></div>
       <button id="install-app" class="install-app-button" type="button" hidden>Install App</button>
-      
-      </div>
-      
-      <div id="custom-relays-box" style="display: none; padding: 24px; border: 1px solid #333; margin: 20px auto; border-radius: 12px; background: #131314; max-width: 600px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #7f7dd1, #548dd9);"></div>
-        <h3 style="margin-top: 0; color: #fff; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
-          <span style="background: linear-gradient(90deg, #7f7dd1, #548dd9); -webkit-background-clip: text; color: transparent;">Relay-to-Relay Sync</span>
-        </h3>
-        <p style="font-size: 0.9em; color: #aaa; line-height: 1.6; margin-bottom: 20px;">
-          Sync your data across specific relays. This mode fetches all your events from the provided list and broadcasts them back to each one, ensuring your data is perfectly mirrored across all selected nodes.
-        </p>
-        <p style="font-size: 0.8em; color: #666; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Target Relays</p>
-        <textarea id="custom-relays-input" placeholder="wss://relay.damus.io, wss://nos.lol, wss://relay.snort.social" style="width: 100%; height: 80px; background: #000; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; box-sizing: border-box; font-size: 0.9em; focus: outline-none;"></textarea>
-        <button onclick="syncCustomRelays()" style="margin-top: 15px; width: 100%; padding: 12px; background: linear-gradient(90deg, #7f7dd1, #548dd9); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: transform 0.2s, opacity 0.2s;" onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">Initiate Localized Sync</button>
-      </div>
 
-      <div>
-        <form>
-          <div>
-            <form>
+    </div>
+
+    <div id="custom-relays-box"
+      style="display: none; padding: 24px; border: 1px solid #333; margin: 20px auto; border-radius: 12px; background: #131314; max-width: 600px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
+      <div
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #7f7dd1, #548dd9);">
+      </div>
+      <h3 style="margin-top: 0; color: #fff; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+        <span
+          style="background: linear-gradient(90deg, #7f7dd1, #548dd9); -webkit-background-clip: text; color: transparent;">Relay-to-Relay
+          Sync</span>
+      </h3>
+      <p style="font-size: 0.9em; color: #aaa; line-height: 1.6; margin-bottom: 20px;">
+        Sync your data across specific relays. This mode fetches all your events from the provided list and broadcasts
+        them back to each one, ensuring your data is perfectly mirrored across all selected nodes.
+      </p>
+      <p
+        style="font-size: 0.8em; color: #666; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+        Target Relays</p>
+      <textarea id="custom-relays-input" placeholder="wss://relay.damus.io, wss://nos.lol, wss://relay.snort.social"
+        style="width: 100%; height: 80px; background: #000; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; box-sizing: border-box; font-size: 0.9em; focus: outline-none;"></textarea>
+      <button onclick="syncCustomRelays()"
+        style="margin-top: 15px; width: 100%; padding: 12px; background: linear-gradient(90deg, #7f7dd1, #548dd9); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: transform 0.2s, opacity 0.2s;"
+        onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'"
+        onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">Initiate Localized Sync</button>
+    </div>
+
+    <div>
+      <form>
+        <div>
+          <form>
+            <div class="space-between">
+              <p>
+                <input type="text" id="pubkey" name="pubkey" oninput="updateButtonText()" onchange="pubkeyOnChange()"
+                  placeholder="Public key (npub or hex)" required />
+              </p>
+            </div>
+            <div class="space-between-small">
+
+            </div>
+            <div class="space-between-small">
               <div class="space-between">
-                <p>
-                  <input
-                    type="text"
-                    id="pubkey"
-                    name="pubkey"
-                    oninput="updateButtonText()"
-                    onchange="pubkeyOnChange()"
-                    placeholder="Public key (npub or hex)"
-                    
-                    required />
-                </p>
-              </div>
-              <div class="space-between-small">
-                
-              </div>
-              <div class="space-between-small">
-                <div class="space-between">
-                 
+
                 <!-- Add a button to toggle the file input -->
-            <!-- Use a div as a toggle element -->
-            
-            
-            <!-- Add a file input with a class to control visibility -->
-            <input type="file" class="file-selector hidden" id="file-selector" accept=".json,.jsonl,.js,application/json,text/javascript">
+                <!-- Use a div as a toggle element -->
 
 
-                
-                  <script>
-                    var fileName = ""
-      
-                    const fileSelector = document.getElementById('file-selector');
-                    fileSelector.addEventListener('change', (event) => {
-                      fileName = event.target.files[0];
-                      $('#fetch-and-broadcast').css('display', 'none')
-                      $('#just-broadcast').css('display', 'inline-block')
-                    });
-                  </script>
-                </div>
+                <!-- Add a file input with a class to control visibility -->
+                <input type="file" class="file-selector hidden" id="file-selector"
+                  accept=".json,.jsonl,.js,application/json,text/javascript">
+
+
+
+                <script>
+                  var fileName = ""
+
+                  const fileSelector = document.getElementById('file-selector');
+                  fileSelector.addEventListener('change', (event) => {
+                    fileName = event.target.files[0];
+                    $('#fetch-and-broadcast').css('display', 'none')
+                    $('#just-broadcast').css('display', 'inline-block')
+                  });
+                </script>
               </div>
-            </form>
-          </div>
+            </div>
+          </form>
+        </div>
 
-          
 
-          <style>
-            /* Define a CSS class to hide the file input */
-            .hidden {
-              display: none;
+
+        <style>
+          /* Define a CSS class to hide the file input */
+          .hidden {
+            display: none;
+          }
+        </style>
+        <script>
+          function toggleFileInput() {
+            var fileInput = document.getElementById('file-selector');
+
+            // Toggle the visibility of the file input
+            if (fileInput.style.display === 'none' || fileInput.style.display === '') {
+              fileInput.style.display = 'block';
+            } else {
+              fileInput.style.display = 'none';
             }
-            
-
-          </style>
-          <script>
-            function toggleFileInput() {
-              var fileInput = document.getElementById('file-selector');
-
-              // Toggle the visibility of the file input
-              if (fileInput.style.display === 'none' || fileInput.style.display === '') {
-                fileInput.style.display = 'block';
-              } else {
-                fileInput.style.display = 'none';
-              }
-            }
-          </script>
-
-          
-         
-            
-
-
-
-        
-            <p>
-              <button id="fetch-and-broadcast" onclick="fetchAndBroadcast(); return false;">
-                Login with Extension
-              </button>
-              <button id="just-broadcast" onclick="justBroadcast(fileName); return false;" style="display: none">
-                Broadcast from File
-              </button>
-            </p>
-            </div>
-            </form>
-            </div>
-            <div class="box">
-              <div class="box-content">
-                <p id="fetching-status"></p>
-                <p style="padding-top: 2px">
-                  <progress type="range" id="fetching-progress" name="fetching-progress" min="0" max="180" value="0"
-                    style="visibility: hidden" />
-                </p>
-              </div>
-              <div class="box-content" id="checking-relays-header-box">
-                <p id="checking-relays-header"></p>
-              </div>
-              <div class="box-content" id="checking-relays-box">
-                <p id="checking-relays"></p>
-              </div>
-              <div class="box-content">
-                <p id="file-download"></p>
-                <p id="events-found"></p>
-              </div>
-              <div class="box-content">
-                <p id="broadcasting-status"></p>
-                <p style="padding-top: 2px">
-                  <progress type="range" id="broadcasting-progress" name="broadcasting-progress" min="0" max="180" value="0"
-                    style="visibility: hidden" />
-                </p>
-              </div>
-            </div>
-      
-      
-
-     
-    </main>
+          }
+        </script>
 
 
 
 
-    <script src="https://bundle.run/buffer@6.0.3"></script>
-    <script src="https://bundle.run/bech32@2.0.0"></script>
-    <script src="https://nostr-utils.pages.dev/js/jquery-3.6.2.min.js"></script>
-    <script src="/js/nostr-utils.js"></script>
-    <script src="/js/relays.js"></script>
-    <script src="/js/nostr-broadcast.js"></script>
-    <script src="/js/pwa.js"></script>
-  </body>
+
+
+
+
+        <p>
+          <button id="fetch-and-broadcast" onclick="fetchAndBroadcast(); return false;">
+            Login with Extension
+          </button>
+          <button id="just-broadcast" onclick="justBroadcast(fileName); return false;" style="display: none">
+            Broadcast from File
+          </button>
+        </p>
+    </div>
+    </form>
+    </div>
+    <div class="box">
+      <div class="box-content">
+        <p id="fetching-status"></p>
+        <p style="padding-top: 2px">
+          <progress type="range" id="fetching-progress" name="fetching-progress" min="0" max="180" value="0"
+            style="visibility: hidden" />
+        </p>
+      </div>
+      <div class="box-content" id="checking-relays-header-box">
+        <p id="checking-relays-header"></p>
+      </div>
+      <div class="box-content" id="checking-relays-box">
+        <p id="checking-relays"></p>
+      </div>
+      <div class="box-content">
+        <p id="file-download"></p>
+        <p id="events-found"></p>
+      </div>
+      <div class="box-content">
+        <p id="broadcasting-status"></p>
+        <p style="padding-top: 2px">
+          <progress type="range" id="broadcasting-progress" name="broadcasting-progress" min="0" max="180" value="0"
+            style="visibility: hidden" />
+        </p>
+      </div>
+    </div>
+
+
+
+
+  </main>
+
+
+
+
+  <script src="https://bundle.run/buffer@6.0.3"></script>
+  <script src="https://bundle.run/bech32@2.0.0"></script>
+  <script src="https://nostr-utils.pages.dev/js/jquery-3.6.2.min.js"></script>
+  <script src="/js/nostr-utils.js"></script>
+  <script src="/js/relays.js"></script>
+  <script src="/js/nostr-broadcast.js"></script>
+  <script src="/js/pwa.js"></script>
+</body>
+
 </html>
