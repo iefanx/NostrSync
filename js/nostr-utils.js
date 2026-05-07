@@ -75,20 +75,20 @@ const isMobile = () =>
   navigator.maxTouchPoints > 0 ||
   /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-// ── Serialization + Storage (Worker-based with main-thread fallback) ────────
+// ── Serialization + Storage ──────────────────────────────────────────────────
+//
+// Strategy:
+//   Mobile / large datasets (>5K events) → chunked main-thread serialization
+//     with async yields.  Avoids the Worker postMessage structured clone which
+//     DEEP-COPIES the entire events array and doubles memory — fatal on iOS.
+//
+//   Desktop + small datasets → Web Worker (off-thread, non-blocking).
+//
+//   Both paths fall back gracefully if IndexedDB fails.
 
-// Main-thread fallback: creates Blob directly using array-of-strings.
-const createBackupBlob = (data, fileName) => {
-  if (fileName.toLowerCase().endsWith('.jsonl')) {
-    const parts = [];
-    for (const event of data) {
-      parts.push(JSON.stringify(event) + "\n");
-    }
-    return new Blob(parts, { type: "application/x-ndjson" });
-  }
-
-  return new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-}
+// Yield to the event loop — prevents iOS from killing the tab for
+// "unresponsive script" during large serializations.
+const _yield = () => new Promise((r) => setTimeout(r, 0));
 
 // Trigger a browser download from a Blob URL or Blob.
 const triggerDownload = (blobOrUrl, fileName) => {
@@ -104,14 +104,25 @@ const triggerDownload = (blobOrUrl, fileName) => {
 };
 
 /**
- * serializeAndStore — Uses a Web Worker to serialize events and store in
- * IndexedDB off the main thread.  Falls back to main-thread if Workers
- * are unavailable (e.g. older browsers or file:// origin).
+ * serializeAndStore — Primary entry point.
  *
- * Returns a Promise that resolves when the download is triggered.
+ * On mobile or with large datasets, uses chunked main-thread serialization
+ * (no structured clone overhead).  On desktop with smaller datasets, offloads
+ * to a Web Worker for a smoother UI.
  */
 async function serializeAndStore(data, fileName) {
-  // Try Worker-based path first
+  const mobile = isMobile();
+  const large = data.length > 5000;
+
+  // Mobile or large dataset → always use chunked main-thread path
+  // Worker postMessage does structured clone = deep copy of ALL events
+  // which doubles memory and crashes iOS for large arrays.
+  if (mobile || large) {
+    console.log(`[Serialize] Using chunked main-thread path (${data.length} events, mobile=${mobile})`);
+    return _chunkedMainThreadSerialize(data, fileName);
+  }
+
+  // Desktop + small dataset → try Worker, fall back to chunked
   if (typeof Worker !== 'undefined') {
     try {
       return await _workerSerialize(data, fileName);
@@ -120,8 +131,65 @@ async function serializeAndStore(data, fileName) {
     }
   }
 
-  // Main-thread fallback
-  return _mainThreadSerialize(data, fileName);
+  return _chunkedMainThreadSerialize(data, fileName);
+}
+
+/**
+ * Chunked main-thread serialization.
+ * Processes events in batches of CHUNK_SIZE, yielding to the event loop
+ * between each batch.  This keeps the browser alive and prevents iOS
+ * from killing the tab for unresponsiveness.
+ *
+ * Peak memory: data array + parts array (~40MB for 50K events) — no copy.
+ */
+const SERIALIZE_CHUNK_SIZE = 500;
+
+async function _chunkedMainThreadSerialize(data, fileName) {
+  const isJsonl = fileName.toLowerCase().endsWith('.jsonl');
+  let blob;
+
+  if (isJsonl) {
+    const parts = [];
+    for (let i = 0; i < data.length; i++) {
+      parts.push(JSON.stringify(data[i]) + "\n");
+
+      // Yield every SERIALIZE_CHUNK_SIZE events to keep the thread alive
+      if ((i + 1) % SERIALIZE_CHUNK_SIZE === 0) {
+        await _yield();
+      }
+    }
+    blob = new Blob(parts, { type: "application/x-ndjson" });
+    // Free the parts array immediately — Blob has its own copy of the data
+    parts.length = 0;
+  } else {
+    blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  }
+
+  console.log(`[Serialize] Blob created: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+
+  // Trigger browser download
+  triggerDownload(blob, fileName);
+
+  // Yield before IDB work
+  await _yield();
+
+  // Try to persist in IndexedDB (non-fatal on failure)
+  try {
+    const uniqueFileName = generateUniqueFileName(fileName);
+    const fileObject = {
+      name: uniqueFileName,
+      content: blob,
+      size: blob.size,
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
+    };
+
+    const db = await openDatabase();
+    await storeFile(db, fileObject);
+    console.log("Backup stored in IndexedDB:", uniqueFileName);
+  } catch (error) {
+    console.warn("IndexedDB storage failed (download still succeeded):", error);
+  }
 }
 
 function _workerSerialize(data, fileName) {
@@ -143,7 +211,6 @@ function _workerSerialize(data, fileName) {
       const { type, blobUrl, size, error } = msg.data;
 
       if (type === "progress") {
-        // Could update a secondary progress indicator here
         return;
       }
 
@@ -169,31 +236,9 @@ function _workerSerialize(data, fileName) {
     };
 
     // Send events to worker — structured clone transfers the array
+    // ONLY used for small datasets on desktop where the copy is affordable
     worker.postMessage({ type: "serialize", events: data, fileName });
   });
-}
-
-async function _mainThreadSerialize(data, fileName) {
-  const blob = createBackupBlob(data, fileName);
-  triggerDownload(blob, fileName);
-
-  // Try to persist in IndexedDB (non-fatal on failure)
-  try {
-    const uniqueFileName = generateUniqueFileName(fileName);
-    const fileObject = {
-      name: uniqueFileName,
-      content: blob,
-      size: blob.size,
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString(),
-    };
-
-    const db = await openDatabase();
-    await storeFile(db, fileObject);
-    console.log("Backup stored in IndexedDB:", uniqueFileName);
-  } catch (error) {
-    console.warn("IndexedDB storage failed (download still succeeded):", error);
-  }
 }
 
 // ── Throttled relay status display ──────────────────────────────────────────
@@ -394,8 +439,12 @@ const getEvents = async (filters, pubkey, customPool) => {
   await Promise.all(workers);
   displayRelayStatus({});
 
-  // return data as an array of events
-  return Object.keys(events).map((id) => events[id]);
+  // Extract events into an array, then clear the hash map so GC can
+  // reclaim its internal storage (~20-50MB for 50K keys) before
+  // serialization begins.
+  const result = Object.keys(events).map((id) => events[id]);
+  for (const key in events) delete events[key];
+  return result;
 };
 
 // ── Send events to a relay (chunked with backpressure) ──────────────────────
