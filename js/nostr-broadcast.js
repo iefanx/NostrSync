@@ -285,7 +285,7 @@ const fetchAndBroadcast = async () => {
     // These two operations are independent — no reason to wait for one before
     // starting the other.  On mobile this saves 2-5 seconds.
 
-    const serializePromise = serializeAndStore(data, 'nostr-backup.jsonl');
+    const serializePromise = serializeAndDownload(data, 'nostr-backup.jsonl');
     const discoveryPromise = discoverAndProbeRelays(data, pubkey, personalRelays);
 
     // Wait for both to finish

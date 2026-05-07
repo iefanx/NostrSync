@@ -75,170 +75,80 @@ const isMobile = () =>
   navigator.maxTouchPoints > 0 ||
   /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-// ── Serialization + Storage ──────────────────────────────────────────────────
+// ── Serialization (download only — no IndexedDB) ────────────────────────────
 //
-// Strategy:
-//   Mobile / large datasets (>5K events) → chunked main-thread serialization
-//     with async yields.  Avoids the Worker postMessage structured clone which
-//     DEEP-COPIES the entire events array and doubles memory — fatal on iOS.
+// Strategy: Build the JSONL backup as a chain of small Blobs.
 //
-//   Desktop + small datasets → Web Worker (off-thread, non-blocking).
+// Instead of stringifying all 50K events into a parts[] array (~80MB of
+// UTF-16 strings), we process 2000 events at a time:
+//   1. Stringify 2000 events → small string array (~3MB)
+//   2. Create a Blob from those strings (~1.6MB binary)
+//   3. Discard the strings (GC reclaims ~3MB)
+//   4. Repeat for next chunk
+//   5. Combine all chunk-Blobs into one final Blob
 //
-//   Both paths fall back gracefully if IndexedDB fails.
+// Peak string memory: ~3MB (one chunk) instead of ~80MB (all events).
+// The Blob constructor accepts other Blobs and concatenates internally.
 
-// Yield to the event loop — prevents iOS from killing the tab for
-// "unresponsive script" during large serializations.
+// Yield to event loop — keeps iOS from killing the tab.
 const _yield = () => new Promise((r) => setTimeout(r, 0));
 
-// Trigger a browser download from a Blob URL or Blob.
-const triggerDownload = (blobOrUrl, fileName) => {
-  const url = typeof blobOrUrl === 'string'
-    ? blobOrUrl
-    : URL.createObjectURL(blobOrUrl);
+// Trigger a browser download from a Blob.
+const triggerDownload = (blob, fileName) => {
+  const url = URL.createObjectURL(blob);
   const tempLink = document.createElement("a");
   tempLink.setAttribute("href", url);
   tempLink.setAttribute("download", fileName);
   tempLink.click();
-  // Revoke after a short delay to ensure the download starts
+  // Revoke after a delay to ensure the download starts
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 };
 
 /**
- * serializeAndStore — Primary entry point.
+ * serializeAndDownload — Serialize events to JSONL and trigger download.
+ * No IndexedDB, no Workers — just the minimum work to create a file.
  *
- * On mobile or with large datasets, uses chunked main-thread serialization
- * (no structured clone overhead).  On desktop with smaller datasets, offloads
- * to a Web Worker for a smoother UI.
+ * Uses chunked sub-Blob building to keep peak memory low on mobile.
  */
-async function serializeAndStore(data, fileName) {
-  const mobile = isMobile();
-  const large = data.length > 5000;
+const SERIALIZE_CHUNK = 2000;
 
-  // Mobile or large dataset → always use chunked main-thread path
-  // Worker postMessage does structured clone = deep copy of ALL events
-  // which doubles memory and crashes iOS for large arrays.
-  if (mobile || large) {
-    console.log(`[Serialize] Using chunked main-thread path (${data.length} events, mobile=${mobile})`);
-    return _chunkedMainThreadSerialize(data, fileName);
-  }
-
-  // Desktop + small dataset → try Worker, fall back to chunked
-  if (typeof Worker !== 'undefined') {
-    try {
-      return await _workerSerialize(data, fileName);
-    } catch (err) {
-      console.warn("Worker serialization failed, falling back to main thread:", err);
-    }
-  }
-
-  return _chunkedMainThreadSerialize(data, fileName);
-}
-
-/**
- * Chunked main-thread serialization.
- * Processes events in batches of CHUNK_SIZE, yielding to the event loop
- * between each batch.  This keeps the browser alive and prevents iOS
- * from killing the tab for unresponsiveness.
- *
- * Peak memory: data array + parts array (~40MB for 50K events) — no copy.
- */
-const SERIALIZE_CHUNK_SIZE = 500;
-
-async function _chunkedMainThreadSerialize(data, fileName) {
+async function serializeAndDownload(data, fileName) {
   const isJsonl = fileName.toLowerCase().endsWith('.jsonl');
   let blob;
 
   if (isJsonl) {
-    const parts = [];
-    for (let i = 0; i < data.length; i++) {
-      parts.push(JSON.stringify(data[i]) + "\n");
+    // Build blob from small chunk-blobs to minimize peak string memory.
+    // Each chunk: 2000 events → ~3MB of strings → ~1.6MB Blob → strings freed.
+    const chunkBlobs = [];
 
-      // Yield every SERIALIZE_CHUNK_SIZE events to keep the thread alive
-      if ((i + 1) % SERIALIZE_CHUNK_SIZE === 0) {
-        await _yield();
+    for (let i = 0; i < data.length; i += SERIALIZE_CHUNK) {
+      const end = Math.min(i + SERIALIZE_CHUNK, data.length);
+      const lines = [];
+      for (let j = i; j < end; j++) {
+        lines.push(JSON.stringify(data[j]) + "\n");
       }
+      // Create a sub-Blob from this chunk's strings
+      chunkBlobs.push(new Blob(lines, { type: "application/x-ndjson" }));
+      // lines[] will be GC'd — only the Blob reference survives
+      await _yield();
     }
-    blob = new Blob(parts, { type: "application/x-ndjson" });
-    // Free the parts array immediately — Blob has its own copy of the data
-    parts.length = 0;
+
+    // Combine all chunk-Blobs into the final Blob
+    // Blob constructor handles this efficiently — no string copies
+    blob = new Blob(chunkBlobs, { type: "application/x-ndjson" });
+    // Free chunk blob references
+    chunkBlobs.length = 0;
   } else {
     blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   }
 
-  console.log(`[Serialize] Blob created: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+  console.log(`[Serialize] Backup ready: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
 
   // Trigger browser download
   triggerDownload(blob, fileName);
 
-  // Yield before IDB work
+  // Allow GC to potentially free blob internals
   await _yield();
-
-  // Try to persist in IndexedDB (non-fatal on failure)
-  try {
-    const uniqueFileName = generateUniqueFileName(fileName);
-    const fileObject = {
-      name: uniqueFileName,
-      content: blob,
-      size: blob.size,
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString(),
-    };
-
-    const db = await openDatabase();
-    await storeFile(db, fileObject);
-    console.log("Backup stored in IndexedDB:", uniqueFileName);
-  } catch (error) {
-    console.warn("IndexedDB storage failed (download still succeeded):", error);
-  }
-}
-
-function _workerSerialize(data, fileName) {
-  return new Promise((resolve, reject) => {
-    let worker;
-    try {
-      worker = new Worker("/js/serialize-worker.js");
-    } catch (e) {
-      reject(e);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      worker.terminate();
-      reject(new Error("Worker timed out after 60s"));
-    }, 60_000);
-
-    worker.onmessage = (msg) => {
-      const { type, blobUrl, size, error } = msg.data;
-
-      if (type === "progress") {
-        return;
-      }
-
-      if (type === "done") {
-        clearTimeout(timeout);
-        console.log(`[Worker] Serialization complete: ${(size / 1024 / 1024).toFixed(2)} MB`);
-        triggerDownload(blobUrl, fileName);
-        worker.terminate();
-        resolve();
-      }
-
-      if (type === "error") {
-        clearTimeout(timeout);
-        worker.terminate();
-        reject(new Error(error));
-      }
-    };
-
-    worker.onerror = (err) => {
-      clearTimeout(timeout);
-      worker.terminate();
-      reject(err);
-    };
-
-    // Send events to worker — structured clone transfers the array
-    // ONLY used for small datasets on desktop where the copy is affordable
-    worker.postMessage({ type: "serialize", events: data, fileName });
-  });
 }
 
 // ── Throttled relay status display ──────────────────────────────────────────
