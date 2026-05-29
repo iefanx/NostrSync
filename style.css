@@ -43,13 +43,9 @@ body {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   width: 100%;
-}
-
-.logo-container {
-  margin-right: 10px;
-  
+  position: relative;
 }
 
 h1 {
