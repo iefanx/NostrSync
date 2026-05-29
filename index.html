@@ -38,8 +38,8 @@
         <div class="logo-container">
 
         </div>
-        <h1>NostrSync
-        </h1>
+        <h1>NostrSync</h1>
+        <button id="install-app" class="install-app-button" type="button" hidden>Install App</button>
       </div>
 
     </div>
@@ -54,7 +54,7 @@
 
       <div id="toggleCustomRelays" class="toggle-button" onclick="toggleCustomRelays()"> <label id="label-custom-relays"> Custom Relays</label></div>
       <div id="toggleBroadcastOnly" class="toggle-button" onclick="toggleBroadcastOnly()"> <label id="label-broadcast-only"> Broadcast only</label></div>
-      <button id="install-app" class="install-app-button" type="button" hidden>Install App</button>
+      <div id="toggleSettings" class="toggle-button" onclick="toggleSettings()"> <label id="label-settings"> Settings</label></div>
 
     </div>
     <div id="custom-relays-box" style="display: none; padding: 24px; border: 1px solid #333; margin: 20px auto; border-radius: 12px; background: #131314; max-width: 600px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
@@ -68,6 +68,38 @@
       <p style="font-size: 0.8em; color: #666; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Target Relays</p>
       <textarea id="custom-relays-input" placeholder="wss://relay.damus.io, wss://nos.lol, wss://relay.snort.social" style="width: 100%; height: 80px; background: #000; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; box-sizing: border-box; font-size: 0.9em; focus: outline-none;"></textarea>
       <button onclick="syncCustomRelays()" style="margin-top: 15px; width: 100%; padding: 12px; background: linear-gradient(90deg, #7f7dd1, #548dd9); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: transform 0.2s, opacity 0.2s;" onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">Initiate Localized Sync</button>
+    </div>
+
+    <div id="settings-box" style="display: none; padding: 24px; border: 1px solid #333; margin: 20px auto; border-radius: 12px; background: #131314; max-width: 600px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #7f7dd1, #548dd9);"></div>
+      <h3 style="margin-top: 0; color: #fff; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+        <span style="background: linear-gradient(90deg, #7f7dd1, #548dd9); -webkit-background-clip: text; color: transparent;">Sync & Connection Settings</span>
+      </h3>
+      <p style="font-size: 0.9em; color: #aaa; line-height: 1.6; margin-bottom: 20px;">
+        Optimize sync performance and prevent relays from rate-limiting or banning your IP/pubkey by adjusting these values.
+      </p>
+      
+      <div style="margin-bottom: 20px;">
+        <label for="concurrency-input" style="font-size: 0.85em; color: #fff; display: block; margin-bottom: 6px; font-weight: bold;">
+          Max Concurrent Relay Connections: <span id="concurrency-val" style="color: #548dd9; font-weight: bold;">10</span>
+        </label>
+        <p style="font-size: 0.8em; color: #888; margin: 0 0 8px 0; text-align: left; display: block;">
+          How many relays the app connects to simultaneously. Lower values are safer for slow networks/browsers.
+        </p>
+        <input type="range" id="concurrency-input" min="1" max="50" value="10" style="width: 100%; cursor: pointer;" oninput="$('#concurrency-val').text(this.value); saveSettings();">
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label for="delay-input" style="font-size: 0.85em; color: #fff; display: block; margin-bottom: 6px; font-weight: bold;">
+          Event Broadcast Delay: <span id="delay-val" style="color: #548dd9; font-weight: bold;">20</span> ms
+        </label>
+        <p style="font-size: 0.8em; color: #888; margin: 0 0 8px 0; text-align: left; display: block;">
+          Pause duration between sending each event to a relay. Adding a delay prevents relays from banning your pubkey for spam.
+        </p>
+        <input type="range" id="delay-input" min="0" max="500" step="5" value="20" style="width: 100%; cursor: pointer;" oninput="$('#delay-val').text(this.value); saveSettings();">
+      </div>
+      
+      <button onclick="toggleSettings()" style="margin-top: 15px; width: 100%; padding: 12px; background: linear-gradient(90deg, #7f7dd1, #548dd9); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: transform 0.2s, opacity 0.2s;" onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">Close Settings</button>
     </div>
 
 

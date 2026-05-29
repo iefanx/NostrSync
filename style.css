@@ -16,12 +16,15 @@ body {
 
 .container {
   max-width: 600px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .logo{
@@ -30,10 +33,18 @@ body {
   
 }
 
+.header-space {
+  width: 100%;
+  padding: 10px 0;
+  box-sizing: border-box;
+  position: relative;
+}
+
 .header {
   display: flex;
   align-items: center;
-
+  justify-content: space-between;
+  width: 100%;
 }
 
 .logo-container {
@@ -123,23 +134,27 @@ button:hover {
 }
 
 .install-app-button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   display: inline-block;
-  padding: 5px 10px;
-  background-color: #131314;
-  color: #f0ecec;
+  padding: 6px 14px;
+  background: linear-gradient(90deg, #7f7dd1, #548dd9);
+  color: #fff;
   border: none;
-  font-size: small;
-  font-weight: 600;
-  border-radius: 25px;
-  margin-left: 5px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border-radius: 20px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: opacity 0.2s, transform 0.2s;
   box-shadow: 0 5px 7px rgba(0, 0, 0, 0.35);
-  animation: slideUp 0.5s ease-in-out forwards;
+  z-index: 100;
 }
 
 .install-app-button:hover {
-  background-color: #0056b3;
+  opacity: 0.9;
+  transform: translateY(-52%);
 }
 
 .install-app-button[hidden] {

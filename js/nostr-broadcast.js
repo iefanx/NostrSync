@@ -1,8 +1,17 @@
 let isCustomMode = false;
 
-function toggleCustomRelays() {
-  const box = $('#custom-relays-box');
-  const label = $('#label-custom-relays');
+function toggleSettings() {
+  const box = $('#settings-box');
+  const label = $('#label-settings');
+  
+  // Close custom relays box if open
+  if ($('#custom-relays-box').css('display') !== 'none') {
+    $('#custom-relays-box').slideUp();
+    $('#label-custom-relays').css({
+      'background': '',
+      'color': ''
+    });
+  }
   
   if (box.css('display') === 'none') {
     box.slideDown();
@@ -17,6 +26,53 @@ function toggleCustomRelays() {
       'color': ''
     });
   }
+}
+
+function toggleCustomRelays() {
+  const box = $('#custom-relays-box');
+  const label = $('#label-custom-relays');
+  
+  // Close settings box if open
+  if ($('#settings-box').css('display') !== 'none') {
+    $('#settings-box').slideUp();
+    $('#label-settings').css({
+      'background': '',
+      'color': ''
+    });
+  }
+  
+  if (box.css('display') === 'none') {
+    box.slideDown();
+    label.css({
+      'background': 'linear-gradient(90deg, #7f7dd1, #548dd9)',
+      'color': '#fff'
+    });
+  } else {
+    box.slideUp();
+    label.css({
+      'background': '',
+      'color': ''
+    });
+  }
+}
+
+function initSettings() {
+  const concurrency = localStorage.getItem('nostrsync_concurrency') || '10';
+  const delay = localStorage.getItem('nostrsync_broadcast_delay') || '20';
+  
+  $('#concurrency-input').val(concurrency);
+  $('#concurrency-val').text(concurrency);
+  
+  $('#delay-input').val(delay);
+  $('#delay-val').text(delay);
+}
+
+function saveSettings() {
+  const concurrency = $('#concurrency-input').val();
+  const delay = $('#delay-input').val();
+  
+  localStorage.setItem('nostrsync_concurrency', concurrency);
+  localStorage.setItem('nostrsync_broadcast_delay', delay);
 }
 
 function toggleBroadcastOnly() {
@@ -224,10 +280,26 @@ const discoverAndProbeRelays = async (data, pubkey, personalRelays) => {
   if (discoveredRelays.length > 0) {
     console.log("Probing discovered personal relays...");
     const activePersonalRelays = [];
-    await Promise.all(discoveredRelays.map(async (url) => {
-      const isAlive = await probeRelay(url);
-      if (isAlive) activePersonalRelays.push(url);
-    }));
+    const queue = [...discoveredRelays];
+    const probeWorkers = [];
+    const maxProbeConcurrency = Math.min(5, parseInt(localStorage.getItem('nostrsync_concurrency') || '10'));
+    
+    const nextProbe = async () => {
+      if (queue.length === 0) return;
+      const url = queue.shift();
+      try {
+        const isAlive = await probeRelay(url);
+        if (isAlive) activePersonalRelays.push(url);
+      } catch (e) {
+        console.warn(`Probe failed for ${url}`, e);
+      }
+      await nextProbe();
+    };
+    
+    for (let i = 0; i < Math.min(maxProbeConcurrency, queue.length); i++) {
+      probeWorkers.push(nextProbe());
+    }
+    await Promise.all(probeWorkers);
 
     console.log("User Relays Discovered:", activePersonalRelays);
     
@@ -351,6 +423,7 @@ const fetchAndBroadcast = async () => {
 // Initial state
 $(document).ready(() => {
   updateButtonText();
+  initSettings();
 });
 
 

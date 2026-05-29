@@ -227,14 +227,15 @@ const updateEventCount = (count) => {
 
 const fetchFromRelay = async (relay, filters, pubkey, events, eventCount, relayStatus) =>
   new Promise((resolve, reject) => {
+    let ws;
     try {
       updateRelayStatus(relay, "Starting", 0, relayStatus);
       // open websocket
-      const ws = new WebSocket(relay);
+      ws = new WebSocket(relay);
 
       // prevent hanging forever
       let myTimeout = setTimeout(() => {
-        ws.close();
+        if (ws) ws.close();
         reject("timeout");
       }, 10_000);
 
@@ -244,7 +245,7 @@ const fetchFromRelay = async (relay, filters, pubkey, events, eventCount, relayS
       ws.onopen = () => {
         clearTimeout(myTimeout);
         myTimeout = setTimeout(() => {
-          ws.close();
+          if (ws) ws.close();
           reject("timeout");
         }, 10_000);
         updateRelayStatus(relay, "Downloading", 0, relayStatus);
@@ -258,7 +259,7 @@ const fetchFromRelay = async (relay, filters, pubkey, events, eventCount, relayS
         if (msgType === "EVENT" && subscriptionId === subsId) {
           clearTimeout(myTimeout);
           myTimeout = setTimeout(() => {
-            ws.close();
+            if (ws) ws.close();
             reject("timeout");
           }, 10_000);
 
@@ -300,7 +301,7 @@ const fetchFromRelay = async (relay, filters, pubkey, events, eventCount, relayS
       console.log(exception);
       updateRelayStatus(relay, "Error", 0, relayStatus);
       try {
-        ws.close();
+        if (ws) ws.close();
       } catch (exception) {}
 
       reject(exception);
@@ -314,7 +315,7 @@ const getEvents = async (filters, pubkey, customPool) => {
   const eventCount = { value: 0 }; // Mutable counter shared across all relay workers
   const pool = customPool || relays;
   const relayStatus = {};
-  const poolSize = 30; // Maintain 30 active fetch connections
+  const poolSize = parseInt(localStorage.getItem('nostrsync_concurrency') || '10');
   let processedCount = 0;
 
   console.log(`Starting dynamic fetch pool for ${pool.length} relays...`);
@@ -363,14 +364,15 @@ const yieldToEventLoop = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 const sendToRelay = async (relay, data, relayStatus) =>
   new Promise((resolve, reject) => {
+    let ws;
     try {
-      const ws = new WebSocket(relay);
+      ws = new WebSocket(relay);
 
       updateRelayStatus(relay, "Starting", 0, relayStatus);
 
       // prevent hanging forever
       let myTimeout = setTimeout(() => {
-        ws.close();
+        if (ws) ws.close();
         reject("timeout");
       }, 10_000);
 
@@ -383,7 +385,7 @@ const sendToRelay = async (relay, data, relayStatus) =>
             // Reset timeout for each event sent
             clearTimeout(myTimeout);
             myTimeout = setTimeout(() => {
-              ws.close();
+              if (ws) ws.close();
               reject("timeout");
             }, 10_000);
 
@@ -399,6 +401,17 @@ const sendToRelay = async (relay, data, relayStatus) =>
             }
             
             // Abort if the connection closed while we were waiting
+            if (ws.readyState !== WebSocket.OPEN) {
+              break;
+            }
+
+            // Pacing delay to prevent relay rate-limiting and bans
+            const delay = parseInt(localStorage.getItem('nostrsync_broadcast_delay') || '20');
+            if (delay > 0) {
+              await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+
+            // Abort if the connection closed during the timeout delay
             if (ws.readyState !== WebSocket.OPEN) {
               break;
             }
@@ -419,7 +432,7 @@ const sendToRelay = async (relay, data, relayStatus) =>
       ws.onmessage = (event) => {
         clearTimeout(myTimeout);
         myTimeout = setTimeout(() => {
-          ws.close();
+          if (ws) ws.close();
           reject("timeout");
         }, 10_000);
 
@@ -448,7 +461,7 @@ const sendToRelay = async (relay, data, relayStatus) =>
       console.log(exception);
       updateRelayStatus(relay, "Error", 0, relayStatus);
       try {
-        ws.close();
+        if (ws) ws.close();
       } catch (exception) {}
       reject(exception);
     }
@@ -457,8 +470,9 @@ const sendToRelay = async (relay, data, relayStatus) =>
 // ── Broadcast events to list of relays (adaptive pool) ──────────────────────
 
 const broadcastEvents = async (data) => {
-  // Adaptive pool size: fewer concurrent connections on mobile
-  const poolSize = isMobile() ? 10 : 15;
+  // Adaptive pool size: read custom concurrency, fallback to adaptive mobile/desktop defaults
+  const customConcurrency = localStorage.getItem('nostrsync_concurrency');
+  const poolSize = customConcurrency ? parseInt(customConcurrency) : (isMobile() ? 8 : 12);
   const relayStatus = {};
   let processedCount = 0;
 
