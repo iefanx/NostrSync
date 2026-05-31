@@ -66,7 +66,7 @@ async function updateRelays() {
 
   // Fallback to local JSON
   try {
-    const response = await fetch("/trustedrelays.json");
+    const response = await fetch("trustedrelays.json");
     if (response.ok) {
       const data = await response.json();
       const localUrls = data
